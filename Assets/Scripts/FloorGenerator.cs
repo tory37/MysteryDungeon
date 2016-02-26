@@ -1,13 +1,19 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+public enum ChunkStatus { Occupied, Unoccupied };
+public enum TileStatus { HasWall, NoWall };
+
 public class FloorGenerator : MonoBehaviour
 {
 
 	#region Editor Interface
 
-	[SerializeField] private int floorColumns;
-	[SerializeField] private int floorRows;
+	[SerializeField] private int numColumnsInFloor;
+	[SerializeField] private int numRowsInFloor;
+
+    [SerializeField] private int numChunksX;
+    [SerializeField] private int numChunksZ;
 
 	[SerializeField] private int minRoomColumns;
 	[SerializeField] private int minRoomRows;
@@ -29,10 +35,20 @@ public class FloorGenerator : MonoBehaviour
 	#region Private Fields
 
 	/// <summary>
-	/// True:  Floor tile has a wall.  During generation, we remove these walls. 
-	/// False: Floor tile is not occupied
+	/// Represents the tiles in the floor
 	/// </summary>
-	private bool[,] floor;
+	private TileStatus[,] tileInFloor;
+
+    private int totalNumChunks;
+
+    private int numberColumnsInChunk;
+    private int numberRowsInChunk;
+
+    /// <summary>
+    /// True: the chunk is occupied by a room
+    /// False: the chunk is not occupied by a room
+    /// </summary>
+    private ChunkStatus[,] chunksInFloor;
 
 	#endregion
 
@@ -40,7 +56,13 @@ public class FloorGenerator : MonoBehaviour
 
 	private void Start()
 	{
-		floor = new bool[floorColumns, floorRows];
+		tileInFloor = new TileStatus[numColumnsInFloor, numRowsInFloor];
+        chunksInFloor = new ChunkStatus[numChunksX, numChunksZ];
+
+        totalNumChunks = numChunksX * numChunksZ;
+
+        numberColumnsInChunk = Mathf.FloorToInt(numColumnsInFloor / numChunksX);
+        numberRowsInChunk = Mathf.FloorToInt(numRowsInFloor / numChunksZ);
 
 		ResetFloor();
 		GenerateRooms();
@@ -53,84 +75,132 @@ public class FloorGenerator : MonoBehaviour
 
 	private void ResetFloor()
 	{
-		for (int column = 0; column < floorColumns; column++)
+		for (int column = 0; column < numColumnsInFloor; column++)
 		{
-			for (int width = 0; width < floorRows; width++)
+			for (int width = 0; width < numRowsInFloor; width++)
 			{
-				floor[column, width] = true;
+				tileInFloor[column, width] = TileStatus.HasWall;
 			}
 		}
+
+        for (int chunkX = 0; chunkX < numChunksX; chunkX++)
+        {
+            for (int chunkZ = 0; chunkZ < numChunksZ; chunkZ++)
+            {
+                chunksInFloor[chunkX, chunkZ] = ChunkStatus.Unoccupied;
+            }
+        }
 	}
 
 	private void GenerateRooms()
 	{
+        maxRooms = maxRooms > totalNumChunks ? totalNumChunks : maxRooms;
 		int numRooms = Random.Range( minRooms, maxRooms );
 
 		for (int room = 0; room < numRooms; room++)
 		{
-			int startingColumn = Random.Range( 0, floorColumns - 1 );
-			int startingRow = Random.Range( 0, floorRows - 1 );
+            int chunkColumn = Random.Range(0, numChunksX);
+            int chunkRow = Random.Range(0, numChunksZ);
 
-			for ( int i = 0; i < findRoomStartTries; i++ )
-			{
-				if ( floor[startingColumn, startingRow] == true )
-					break;
+            for (int i = 0; i < findRoomStartTries; i++ )
+            {
+                if (chunksInFloor[chunkColumn, chunkRow] == ChunkStatus.Unoccupied)
+                    break;
+                else
+                {
+                    chunkColumn = Random.Range(0, numChunksX);
+                    chunkRow = Random.Range(0, numChunksZ);
+                }
+            }
 
-				startingColumn = Random.Range( 0, maxRoomColumns - 1 );
-				startingRow = Random.Range( 0, maxRoomRows - 1 );
-			}
+            if (chunksInFloor[chunkColumn, chunkRow] == ChunkStatus.Occupied)
+            {
+                for (int chunkX = 0; chunkX < numChunksX; chunkX++)
+                {
+                    for (int chunkZ = 0; chunkZ < numRowsInFloor; chunkZ++)
+                    {
+                        chunkColumn = chunkX;
+                        chunkRow = chunkZ;
 
-			for ( int i = 0; i < floorColumns; i++ )
-			{
-				int column = (i + startingColumn) < floorColumns ? (i + startingColumn) : ((i + startingColumn) - floorColumns);
-				for ( int j = 0; j < floorRows; j++ )
-				{
-					int row = (j + startingRow) < floorRows ? (j + startingRow) : ((j + startingRow) - floorRows);
-					if (floor[column, row] == true)
-					{
-						startingColumn = column;
-						startingRow = row;
-						break;
-					}
-				}
-				if ( floor[startingColumn, startingRow] == true )
-					break;
-			}
+                        if (chunksInFloor[chunkColumn, chunkRow] == ChunkStatus.Unoccupied)
+                            break;
+                    }
+                    if (chunksInFloor[chunkColumn, chunkRow] == ChunkStatus.Unoccupied)
+                        break;
+                }
+            }    
 
-			GenerateRoom( startingColumn, startingRow );
-
+            GenerateRoom(chunkColumn, chunkRow);
 		}
 	}
 
-	private void GenerateRoom(int startingColumn, int startingRow)
+	private void GenerateRoom(int chunkColum, int chunkRow)
 	{
-		int roomColumns = Random.Range( minRoomColumns, maxRoomColumns );
-		int roomRows = Random.Range( minRoomRows, maxRoomRows );
+        Debug.Log("Room In Chunk: " + chunkColum + ", " + chunkRow);
+        chunksInFloor[chunkColum, chunkRow] = ChunkStatus.Occupied;
 
-		for (int column = startingColumn; column < (startingColumn + roomColumns < floorColumns ? startingColumn + roomColumns : floorColumns); column++)
+		int roomColumns = Random.Range( minRoomColumns, maxRoomColumns < numberColumnsInChunk ? maxRoomColumns : numberColumnsInChunk );
+		int roomRows = Random.Range( minRoomRows, maxRoomRows < numberRowsInChunk ? maxRoomRows : numberRowsInChunk );
+        Debug.Log("Columns: " + roomColumns);
+        Debug.Log("Rows: " + roomRows);
+
+        int leastColumn = chunkColum * numberColumnsInChunk;
+        int maxColumn = ((chunkColum + 1) * numberColumnsInChunk) - roomColumns;
+        int leastRow = chunkRow * numberRowsInChunk;
+        int maxRow = ((chunkRow + 1) * numberRowsInChunk ) - roomRows;
+
+        int startingColumn = Random.Range(leastColumn, maxColumn);
+        int startingRow = Random.Range(leastRow, maxRow);
+
+		for (int column = startingColumn; column < roomColumns + startingColumn; column++)
 		{
-			for ( int row = startingRow; row < (startingRow + roomRows < floorRows ? startingRow + roomRows : floorRows); row++ )
-			{
-				if ( floor[column, row] == false )
-					break;
-				else
-					floor[column, row] = false;
-			}
-		}
-	}
+            for (int row = startingRow; row < roomRows + startingRow; row++)
+            {
+                try
+                {
+                    if ((column == startingColumn && column > 0 && tileInFloor[column - 1, row] == TileStatus.NoWall)
+                       || (column == (roomColumns + startingColumn) - 1 && column < numColumnsInFloor - 1 && tileInFloor[column + 1, row] == TileStatus.NoWall)
+                       || (row == startingRow && row > 0 && tileInFloor[column, row - 1] == TileStatus.NoWall)
+                       || (row == (roomRows + startingRow) - 1 && row < numRowsInFloor - 1 && tileInFloor[column, row + 1] == TileStatus.NoWall))
+                        Debug.Log("Tile " + column + ", " + row + " did not get placed to maintain a wall on a side.");
+                    else if (tileInFloor[column, row] == TileStatus.HasWall)
+                        tileInFloor[column, row] = TileStatus.NoWall;
+                    else
+                        Debug.LogError("During room generation, we tried to remove wall: " + column + ", " + row + ".  It had already been removed.");
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("Chunk: " + chunkColum + ", " + chunkRow);
+                    Debug.LogError("Column: " + column + ", Row: " + row + ", StartingRow: " + startingRow + ", MaxRow: " + maxRow );
+                }
+            }
+        }
+    }
 
 	private void DrawFloor()
 	{
-		for ( int column = 0; column < floorColumns; column++ )
+		for ( int column = 0; column < numColumnsInFloor; column++ )
 		{
-			for ( int row = 0; row < floorRows; row++ )
+			for ( int row = 0; row < numRowsInFloor; row++ )
 			{
-				if ( floor[column, row] == true )
+				if ( tileInFloor[column, row] == TileStatus.HasWall )
 					GameObject.Instantiate( wallTestObject, new Vector3( column, .5f, row ), Quaternion.identity );
 				else
 					GameObject.Instantiate( floorTestObject, new Vector3( column, 0f, row ), Quaternion.identity );
 			}
 		}
+
+        for (int column = -1; column <= numColumnsInFloor; column++)
+        {
+            GameObject.Instantiate(wallTestObject, new Vector3(column, .5f, -1), Quaternion.identity);
+            GameObject.Instantiate(wallTestObject, new Vector3(column, .5f, numRowsInFloor), Quaternion.identity);
+        }
+
+        for (int row = -1; row <= numRowsInFloor; row++)
+        {
+            GameObject.Instantiate(wallTestObject, new Vector3(-1, .5f, row), Quaternion.identity);
+            GameObject.Instantiate(wallTestObject, new Vector3(numColumnsInFloor, .5f, row), Quaternion.identity);
+        }
 	}
 
 	#endregion
