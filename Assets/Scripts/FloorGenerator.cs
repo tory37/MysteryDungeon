@@ -4,26 +4,37 @@ using System.Collections;
 public enum ChunkStatus { Occupied, Unoccupied };
 public enum TileStatus { HasWall, NoWall };
 
+public struct Room
+{
+
+}
+
 public class FloorGenerator : MonoBehaviour
 {
 
 	#region Editor Interface
 
+	[Header("Floor")]
 	[SerializeField] private int numColumnsInFloor;
 	[SerializeField] private int numRowsInFloor;
 
+	[Header( "Chunks" )]
     [SerializeField] private int numChunksX;
     [SerializeField] private int numChunksZ;
 
-	[SerializeField] private int minRoomColumns;
-	[SerializeField] private int minRoomRows;
-
-	[SerializeField] private int maxRoomColumns;
-	[SerializeField] private int maxRoomRows;
-
+	[Header( "Rooms" )]
 	[SerializeField] private int minRooms;
 	[SerializeField] private int maxRooms;
 
+	[Header( "Min Max Columns" )]
+	[SerializeField] private int minRoomColumns;
+	[SerializeField] private int maxRoomColumns;
+
+	[Header( "Min Max Rows" )]
+	[SerializeField] private int minRoomRows;
+	[SerializeField] private int maxRoomRows;
+
+	[Header("Other")]
 	[Tooltip("This represents how many times the a random starting point for a room is attempted to be found before incrementally looping through the spaces.  This is to avoid the possibility of 'never finding an open space.'")]
 	[SerializeField] private int findRoomStartTries;
 
