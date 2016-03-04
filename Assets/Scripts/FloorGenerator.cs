@@ -1,47 +1,101 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public enum ChunkStatus { Occupied, Unoccupied };
 public enum TileStatus { HasWall, NoWall };
 
-public struct Cell { public int column, row;}
-
-public class Chunk
-{
-	public int X, Z;
-    public int Partition;
-
-	public class Room
-	{
-		public int columns, rows, startingColumn, startingRow;
-	}
-
-	public ChunkStatus Status;
-	public Room MyRoom;
-
-	public GameObject CenterMarker;
-
-	public Chunk( int x, int z )
-	{
-		X = x;
-		Z = z;
-		Status = ChunkStatus.Unoccupied;
-		MyRoom = null;
-	}
-
-	public void SetRoom( int columns, int rows, int startingColumn, int startingRow )
-	{
-		MyRoom = new Room();
-		MyRoom.columns = columns;
-		MyRoom.rows = rows;
-		MyRoom.startingColumn = startingColumn;
-		MyRoom.startingRow = startingRow;
-	}
-}
-
+/// <summary>
+/// This class is used to generate the floor at the beginning of a level, or "floor."  
+/// The process is described below:
+///		* Add these points later
+///	The terms North, East, South and West represent the position of chunks relative to other chunks.
+///		North represents the saame X value, but a higher Z value
+///		East represents the same Z value, but a higher X value
+///		South represents the same X value, but  lower Z value
+///		West represents the same Z value, but a lower X value
+/// </summary>
 public class FloorGenerator : MonoBehaviour
 {
+	#region Private Data Structures
+
+	private class Cell
+	{
+		public int column, row;
+
+		public Cell()
+		{
+			column = row = 0;
+		}
+
+		public Cell( int column, int row )
+		{
+			this.column = column;
+			this.row = row;
+		}
+	}
+
+	private class Chunk
+	{
+		public int X, Z;
+		public int Partition;
+
+		public class Room
+		{
+			public int columns, rows, startingColumn, startingRow;
+		}
+
+		public ChunkStatus Status;
+		public Room MyRoom;
+
+		public GameObject CenterMarker;
+
+		public Chunk( int x, int z )
+		{
+			X = x;
+			Z = z;
+			Status = ChunkStatus.Unoccupied;
+			MyRoom = null;
+		}
+
+		public void SetRoom( int columns, int rows, int startingColumn, int startingRow )
+		{
+			MyRoom = new Room();
+			MyRoom.columns = columns;
+			MyRoom.rows = rows;
+			MyRoom.startingColumn = startingColumn;
+			MyRoom.startingRow = startingRow;
+		}
+	}
+
+	private class Node : IEquatable<Node>
+	{
+		public Cell cell;
+		public int gCost;
+		public int hCost;
+		public Node parent;
+
+		public Node( Cell cell )
+		{
+			this.cell = cell;
+		}
+
+		public int fCost
+		{
+			get { return gCost + hCost; }
+		}
+
+		public bool Equals( Node other)
+		{
+			if ( other == null )
+				return false;
+
+			return this.cell.column == other.cell.column && this.cell.row == other.cell.row;
+		}
+	}
+
+	#endregion
 
 	#region Editor Interface
 
@@ -104,7 +158,7 @@ public class FloorGenerator : MonoBehaviour
 	/// <summary>
 	/// Represents the tiles in the floor
 	/// </summary>
-	private TileStatus[,] tileInFloor;
+	private TileStatus[,] floorCells;
 
 	private int totalNumChunks;
 
@@ -138,7 +192,7 @@ public class FloorGenerator : MonoBehaviour
 
 	private void ResetFloor()
 	{
-		tileInFloor = new TileStatus[numColumnsInFloor, numRowsInFloor];
+		floorCells = new TileStatus[numColumnsInFloor, numRowsInFloor];
 
 		chunks = new Chunk[numChunksX, numChunksZ];
 
@@ -150,8 +204,8 @@ public class FloorGenerator : MonoBehaviour
 			for ( int z = 0; z < numChunksZ; z++ )
 			{
 				chunks[x, z] = new Chunk( x, z );
-                chunks[x, z].Partition = partitionCount;
-                partitionCount++;
+				chunks[x, z].Partition = partitionCount;
+				partitionCount++;
 				chunks[x, z].CenterMarker = new GameObject();
 				chunks[x, z].CenterMarker.transform.position = new Vector3( (x * numberColumnsInChunk) + (.5f * numberColumnsInChunk), 2f, (z * numberRowsInChunk) + (.5f * numberRowsInChunk) );
 				chunks[x, z].CenterMarker.transform.parent = chunkObjectsParent;
@@ -163,7 +217,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int width = 0; width < numRowsInFloor; width++ )
 			{
-				tileInFloor[column, width] = TileStatus.HasWall;
+				floorCells[column, width] = TileStatus.HasWall;
 			}
 		}
 	}
@@ -171,12 +225,12 @@ public class FloorGenerator : MonoBehaviour
 	private void GenerateRooms()
 	{
 		maxRooms = maxRooms > totalNumChunks ? totalNumChunks : maxRooms;
-		int numRooms = Random.Range( minRooms, maxRooms );
+		int numRooms = UnityEngine.Random.Range( minRooms, maxRooms );
 
 		for ( int room = 0; room < numRooms; room++ )
 		{
-			int chunkColumn = Random.Range( 0, numChunksX );
-			int chunkRow = Random.Range( 0, numChunksZ );
+			int chunkColumn = UnityEngine.Random.Range( 0, numChunksX );
+			int chunkRow = UnityEngine.Random.Range( 0, numChunksZ );
 
 			for ( int i = 0; i < findRoomStartTries; i++ )
 			{
@@ -184,8 +238,8 @@ public class FloorGenerator : MonoBehaviour
 					break;
 				else
 				{
-					chunkColumn = Random.Range( 0, numChunksX );
-					chunkRow = Random.Range( 0, numChunksZ );
+					chunkColumn = UnityEngine.Random.Range( 0, numChunksX );
+					chunkRow = UnityEngine.Random.Range( 0, numChunksZ );
 				}
 			}
 
@@ -219,20 +273,20 @@ public class FloorGenerator : MonoBehaviour
 				break;
 
 			Chunk startingChunk = FindRandomChunk();
-			Chunk endingChunk = FindEndingChunk(startingChunk);
+			Chunk endingChunk = FindEndingChunk( startingChunk );
 
 			if ( endingChunk != null )
 				ConnectTwoChunks( startingChunk, endingChunk );
 		}
 
 		// Loop through all rooms to ensure all are in same partition if random finding is taking too long
-		if (!CheckAllRoomsConnected())
+		if ( !CheckAllRoomsConnected() )
 		{
 			for ( int x = 0; x < numChunksX; x++ )
 			{
 				for ( int z = 0; z < numChunksZ; z++ )
 				{
-                    Chunk startingChunk = chunks[x, z];
+					Chunk startingChunk = chunks[x, z];
 					Chunk endingChunk = FindEndingChunk( startingChunk );
 
 					if ( endingChunk != null )
@@ -245,19 +299,19 @@ public class FloorGenerator : MonoBehaviour
 	// Returns true if all rooms are in the same partiion
 	private bool CheckAllRoomsConnected()
 	{
-		int zerothPartition = -1;  
+		int zerothPartition = -1;
 
 		for ( int x = 0; x < numChunksX; x++ )
 		{
 			for ( int z = 0; z < numChunksZ; z++ )
 			{
-                if (chunks[x, z].MyRoom != null)
-                {
-                    zerothPartition = chunks[x, z].Partition;
-                    break;
-                }
+				if ( chunks[x, z].MyRoom != null )
+				{
+					zerothPartition = chunks[x, z].Partition;
+					break;
+				}
 			}
-			if (zerothPartition != -1)
+			if ( zerothPartition != -1 )
 				break;
 		}
 
@@ -278,8 +332,8 @@ public class FloorGenerator : MonoBehaviour
 		//Debug.Log( "Room In Chunk: " + chunkColumn + ", " + chunkRow );
 		chunks[chunkColumn, chunkRow].Status = ChunkStatus.Occupied;
 
-		int roomColumns = Random.Range( minRoomColumns, maxRoomColumns < numberColumnsInChunk ? maxRoomColumns : numberColumnsInChunk );
-		int roomRows = Random.Range( minRoomRows, maxRoomRows < numberRowsInChunk ? maxRoomRows : numberRowsInChunk );
+		int roomColumns = UnityEngine.Random.Range( minRoomColumns, maxRoomColumns < numberColumnsInChunk ? maxRoomColumns : numberColumnsInChunk );
+		int roomRows = UnityEngine.Random.Range( minRoomRows, maxRoomRows < numberRowsInChunk ? maxRoomRows : numberRowsInChunk );
 		//Debug.Log( "Columns: " + roomColumns );
 		//Debug.Log( "Rows: " + roomRows );
 
@@ -288,8 +342,8 @@ public class FloorGenerator : MonoBehaviour
 		int leastRow = chunkRow * numberRowsInChunk;
 		int maxRow = ((chunkRow + 1) * numberRowsInChunk) - roomRows;
 
-		int startingColumn = Random.Range( leastColumn, maxColumn );
-		int startingRow = Random.Range( leastRow, maxRow );
+		int startingColumn = UnityEngine.Random.Range( leastColumn, maxColumn );
+		int startingRow = UnityEngine.Random.Range( leastRow, maxRow );
 
 		// Create the room, assign it the latest partition number, and then update the partition counter;
 		chunks[chunkColumn, chunkRow].SetRoom( roomColumns, roomRows, startingColumn, startingRow );
@@ -303,13 +357,13 @@ public class FloorGenerator : MonoBehaviour
 			{
 				try
 				{
-					if ( (column == startingColumn && column > 0 && tileInFloor[column - 1, row] == TileStatus.NoWall)
-					   || (column == (roomColumns + startingColumn) - 1 && column < numColumnsInFloor - 1 && tileInFloor[column + 1, row] == TileStatus.NoWall)
-					   || (row == startingRow && row > 0 && tileInFloor[column, row - 1] == TileStatus.NoWall)
-					   || (row == (roomRows + startingRow) - 1 && row < numRowsInFloor - 1 && tileInFloor[column, row + 1] == TileStatus.NoWall) )
+					if ( (column == startingColumn && column > 0 && floorCells[column - 1, row] == TileStatus.NoWall)
+					   || (column == (roomColumns + startingColumn) - 1 && column < numColumnsInFloor - 1 && floorCells[column + 1, row] == TileStatus.NoWall)
+					   || (row == startingRow && row > 0 && floorCells[column, row - 1] == TileStatus.NoWall)
+					   || (row == (roomRows + startingRow) - 1 && row < numRowsInFloor - 1 && floorCells[column, row + 1] == TileStatus.NoWall) )
 						Debug.Log( "Tile " + column + ", " + row + " did not get placed to maintain a wall on a side." );
-					else if ( tileInFloor[column, row] == TileStatus.HasWall )
-						tileInFloor[column, row] = TileStatus.NoWall;
+					else if ( floorCells[column, row] == TileStatus.HasWall )
+						floorCells[column, row] = TileStatus.NoWall;
 					else
 						Debug.LogError( "During room generation, we tried to remove wall: " + column + ", " + row + ".  It had already been removed." );
 				}
@@ -329,7 +383,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int z = 0; z < numChunksZ; z++ )
 			{
-				if (chunks[x,z].MyRoom != null)
+				if ( chunks[x, z].MyRoom != null )
 					Debug.Log( "Chunk " + x + ", " + z + " in partition " + chunks[x, z].Partition );
 			}
 		}
@@ -338,7 +392,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int row = 0; row < numRowsInFloor; row++ )
 			{
-				if ( tileInFloor[column, row] == TileStatus.HasWall )
+				if ( floorCells[column, row] == TileStatus.HasWall )
 				{
 					GameObject wall = GameObject.Instantiate( wallTestObject, new Vector3( column, .5f, row ), Quaternion.identity ) as GameObject;
 					wall.transform.parent = wallsParent;
@@ -372,8 +426,8 @@ public class FloorGenerator : MonoBehaviour
 	{
 		Chunk startingChunk = null;
 
-		int x = Random.Range( 0, numChunksX - 1 );
-		int z = Random.Range( 0, numChunksZ - 1 );
+		int x = UnityEngine.Random.Range( 0, numChunksX - 1 );
+		int z = UnityEngine.Random.Range( 0, numChunksZ - 1 );
 
 		// Pick starting chunk with a room
 		while ( startingChunk == null )
@@ -382,8 +436,8 @@ public class FloorGenerator : MonoBehaviour
 			if ( temp.MyRoom != null )
 				startingChunk = temp;
 
-			x = Random.Range( 0, numChunksX - 1 );
-			z = Random.Range( 0, numChunksZ - 1 );
+			x = UnityEngine.Random.Range( 0, numChunksX - 1 );
+			z = UnityEngine.Random.Range( 0, numChunksZ - 1 );
 		}
 
 		return startingChunk;
@@ -402,67 +456,55 @@ public class FloorGenerator : MonoBehaviour
 		Chunk endingChunk = null;
 
 		int modifier = 1;
-        bool canRight, canDown, canLeft, canUp;
-		canRight = canDown = canLeft = canUp = true;
+		bool canEast, canSouth, canWest, canNorth;
+		canEast = canSouth = canWest = canNorth = true;
 
 		// Search the surrounding chunks for a room that can be patched with a hall that's not in the starting partition
 		while ( x + modifier < numChunksX || x - modifier >= 0 || z + modifier < numChunksZ || z - modifier >= 0 )
 		{
-			// Check right
-			if ( canRight && x + modifier < numChunksX)
+			// Check East
+			if ( canEast && x + modifier < numChunksX )
 			{
-                //if (chunks[x + modifier, z].MyRoom != null)
-                //    canRight = false;
-
-                if (startingChunk.Partition != chunks[x + modifier, z].Partition)
-                {
-                    endingChunk = chunks[x + modifier, z];
-                    break;
-                }
-                else
-                    canRight = false;
+				if ( startingChunk.Partition != chunks[x + modifier, z].Partition )
+				{
+					endingChunk = chunks[x + modifier, z];
+					break;
+				}
+				else
+					canEast = false;
 			}
-			// Check Down
-			if ( canDown && z - modifier >= 0 )
+			// Check South
+			if ( canSouth && z - modifier >= 0 )
 			{
-                //if (chunks[x, z - modifier].MyRoom != null)
-                //    canDown = false;
-
-                if (startingChunk.Partition != chunks[x, z - modifier].Partition)
-                {
-                    endingChunk = chunks[x, z - modifier];
-                    break;
-                }
-                else
-                    canDown = false;
+				if ( startingChunk.Partition != chunks[x, z - modifier].Partition )
+				{
+					endingChunk = chunks[x, z - modifier];
+					break;
+				}
+				else
+					canSouth = false;
 			}
-			// Check Left
-			if ( canLeft && x - modifier >= 0 )
+			// Check West
+			if ( canWest && x - modifier >= 0 )
 			{
-                //if ( chunks[x - modifier, z].MyRoom != null )
-                //    canLeft = false;
-
-                if (startingChunk.Partition != chunks[x - modifier, z].Partition)
-                {
-                    endingChunk = chunks[x - modifier, z];
-                    break;
-                }
-                else
-                    canLeft = false;
+				if ( startingChunk.Partition != chunks[x - modifier, z].Partition )
+				{
+					endingChunk = chunks[x - modifier, z];
+					break;
+				}
+				else
+					canWest = false;
 			}
-			// Check Up
-			if ( canUp && z + modifier < numChunksZ )
+			// Check North
+			if ( canNorth && z + modifier < numChunksZ )
 			{
-                //if (chunks[x, z + modifier].MyRoom != null)
-                //    canUp = false;
-
-                if (startingChunk.Partition != chunks[x, z + modifier].Partition)
-                {
-                    endingChunk = chunks[x, z + modifier];
-                    break;
-                }
-                else
-                    canUp = false;
+				if ( startingChunk.Partition != chunks[x, z + modifier].Partition )
+				{
+					endingChunk = chunks[x, z + modifier];
+					break;
+				}
+				else
+					canNorth = false;
 			}
 
 			modifier++;
@@ -471,7 +513,12 @@ public class FloorGenerator : MonoBehaviour
 		return endingChunk;
 	}
 
-	private void ConnectTwoChunks(Chunk startingChunk, Chunk endingChunk)
+	private Cell CellRound(float column, float row)
+	{
+		return new Cell( Mathf.FloorToInt( column ), Mathf.FloorToInt( row ) );
+	}
+
+	private void ConnectTwoChunks( Chunk startingChunk, Chunk endingChunk )
 	{
 		int newPartition = startingChunk.Partition;
 		int oldPartition = endingChunk.Partition;
@@ -485,6 +532,24 @@ public class FloorGenerator : MonoBehaviour
 			}
 		}
 
+		List<Cell> path = FindPathInterpolate( startingChunk, endingChunk );
+
+		for (int i = 0; i < path.Count; i++)
+		{
+			int column = path[i].column;
+			int row = path[i].row;
+			floorCells[column, row] = TileStatus.NoWall;
+		}
+
+		//FindPath( startingChunk, endingChunk );
+
+		//DrawDebugLinesBetweenChunks(startingChunk, endingChunk);
+		
+	}
+
+	private void DrawDebugLinesBetweenChunks(Chunk startingChunk, Chunk endingChunk)
+	{
+		// Draw Lines
 		LineRenderer newLine = (GameObject.Instantiate( ConnectorRenderer, Vector3.up * 2, Quaternion.identity ) as GameObject).GetComponent<LineRenderer>();
 		newLine.transform.parent = connectorsParent;
 
@@ -496,6 +561,202 @@ public class FloorGenerator : MonoBehaviour
 		else
 		{
 			Debug.LogError( "newLine is null." );
+		}
+	}
+
+	private List<Cell> FindPathInterpolate( Chunk startingChunk, Chunk endingChunk )
+	{
+		List<Node> path = new List<Node>();
+
+		// Find the starting tile
+		Cell startCell = new Cell();
+
+		FindFirstChunkPathCell( ref startCell, startingChunk, endingChunk );
+
+		// Find ending tile
+		Cell endCell = new Cell();
+
+		FindFirstChunkPathCell( ref endCell, endingChunk, startingChunk );
+
+		int dx = endCell.column - startCell.column, dz = endCell.row - startCell.row;
+		int nx = Mathf.Abs( dx ), nz = Mathf.Abs( dz );
+		int sign_x = dx > 0 ? 1 : -1, sign_z = dz > 0 ? 1 : -1;
+
+		Cell c = new Cell(startCell.column, startCell.row);
+		List<Cell> cells = new List<Cell> { new Cell(c.column, c.row) };
+		for (int ix = 0, iz = 0; ix < nx || iz < nz; )
+		{
+			if ((0.5+ix) / nx < (0.5+iz) / nz)
+			{
+				// next step is horizontal
+				c.column += sign_x;
+				ix++;
+			}
+			else
+			{
+				// next step is vertical
+				c.row += sign_z;
+				iz++;
+			}
+			cells.Add( new Cell( c.column, c.row ) );
+		}
+		return cells;
+	}
+
+	private void FindPath( Chunk startingChunk, Chunk endingChunk )
+	{
+		List<Node> path = new List<Node>();
+
+		// Find the starting tile
+		Cell startCell = new Cell();
+
+		FindFirstChunkPathCell( ref startCell, startingChunk, endingChunk );
+
+		// Find ending tile
+		Cell endCell = new Cell();
+
+		FindFirstChunkPathCell( ref endCell, endingChunk, startingChunk );
+
+		// Find path
+		Node startNode = new Node( startCell );
+		Node endNode = new Node( endCell );
+
+		List<Node> openSet = new List<Node>();
+		HashSet<Node> closedSet = new HashSet<Node>();
+		openSet.Add( startNode );
+
+		while(openSet.Count > 0)
+		{
+			Node currentNode = openSet[0];
+			for (int i = 1; i < openSet.Count; i++)
+			{
+				if ( openSet[i].fCost < currentNode.fCost || openSet[i].fCost == currentNode.fCost && openSet[i].hCost < currentNode.hCost)
+				{
+					currentNode = openSet[i];
+				}
+			}
+
+			openSet.Remove( currentNode );
+			closedSet.Add( currentNode );
+
+			if (currentNode == endNode)
+			{
+				RetracePath(startNode, endNode);
+				return;
+			}
+
+			foreach (Node neighbour in FindNeighbourNodes(currentNode))
+			{
+				if ( closedSet.Contains( neighbour ) )
+					continue;
+
+				int newMovementCostToNeighbour = currentNode.gCost + GetNodeDistance( currentNode, neighbour );
+				if (newMovementCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
+				{
+					neighbour.gCost = newMovementCostToNeighbour;
+					neighbour.hCost = GetNodeDistance( neighbour, endNode );
+					neighbour.parent = currentNode;
+
+					if ( !openSet.Contains( neighbour ) )
+						openSet.Add( neighbour );
+				}
+			}
+		}
+
+		for (int i = 0; i < path.Count; i++)
+		{
+			floorCells[path[i].cell.column, path[i].cell.row] = TileStatus.NoWall;
+		}
+	}
+
+	private List<Node> RetracePath( Node startNode, Node endNode )
+	{
+		List<Node> path = new List<Node>();
+		Node currentNode = endNode;
+
+		while (currentNode != startNode)
+		{
+			path.Add( currentNode );
+			currentNode = currentNode.parent;
+		}
+		path.Reverse();
+
+		return path;
+	}
+
+	private int GetNodeDistance(Node a, Node b)
+	{
+		int dstX = Mathf.Abs( a.cell.column - b.cell.column );
+		int dstY = Mathf.Abs( a.cell.row - b.cell.row );
+
+		if ( dstX > dstY )
+			return 14 * dstY + 10 * (dstX - dstY);
+		return 14 * dstX + 10 * (dstY - dstX);
+	}
+
+	private List<Node> FindNeighbourNodes( Node baseNode )
+	{
+		List<Node> result = new List<Node>();
+
+		// Find North
+		if ( baseNode.cell.row < numRowsInFloor - 1 )
+			result.Add( new Node( new Cell { column = baseNode.cell.column, row = baseNode.cell.row + 1 } ) );
+		// Find East
+		if ( baseNode.cell.column < numColumnsInFloor - 1 )
+			result.Add( new Node( new Cell { column = baseNode.cell.column + 1, row = baseNode.cell.row } ) );
+		// Find South
+		if ( baseNode.cell.row > 0 )
+			result.Add( new Node( new Cell { column = baseNode.cell.column, row = baseNode.cell.row - 1 } ) );
+		// Find West
+		if ( baseNode.cell.column > 0 )
+			result.Add( new Node( new Cell { column = baseNode.cell.column - 1, row = baseNode.cell.row } ) );
+
+		return result;
+	}
+
+	/// <summary>
+	/// Find a random tile either on the edge of a room, or finds an appropriate tile in a roomless chunk 
+	///		for the pathfinding algorithm to use as an end point.  It finds the tile for \firstChunk\ based
+	///		on the location of \secondChunk\
+	/// </summary>
+	/// <param name="col"></param>
+	/// <param name="row"></param>
+	/// <param name="firstChunk"></param>
+	/// <param name="secondChunk"></param>
+	private void FindFirstChunkPathCell( ref Cell cell, Chunk firstChunk, Chunk secondChunk )
+	{
+		if ( firstChunk.MyRoom != null )
+		{
+			// If end if north
+			if ( secondChunk.Z > firstChunk.Z && secondChunk.X == firstChunk.X )
+			{
+				cell.column = UnityEngine.Random.Range( firstChunk.MyRoom.startingColumn, firstChunk.MyRoom.startingColumn + firstChunk.MyRoom.columns );
+				cell.row = firstChunk.MyRoom.startingRow + firstChunk.MyRoom.rows;
+			}
+			// If end is south
+			else if ( secondChunk.Z < firstChunk.Z && secondChunk.X == firstChunk.X )
+			{
+				cell.column = UnityEngine.Random.Range( firstChunk.MyRoom.startingColumn, firstChunk.MyRoom.startingColumn + firstChunk.MyRoom.columns );
+				cell.row = firstChunk.MyRoom.startingRow - 1;
+			}
+			// If end is east
+			else if ( secondChunk.Z == firstChunk.Z && secondChunk.X > firstChunk.X )
+			{
+				cell.column = firstChunk.MyRoom.startingColumn + firstChunk.MyRoom.columns;
+				cell.row = UnityEngine.Random.Range( firstChunk.MyRoom.startingRow, firstChunk.MyRoom.startingRow + firstChunk.MyRoom.rows );
+			}
+			else if ( secondChunk.Z == firstChunk.Z && secondChunk.X < firstChunk.X )
+			{
+				cell.column = firstChunk.MyRoom.startingColumn - 1;
+				cell.row = UnityEngine.Random.Range( firstChunk.MyRoom.startingRow, firstChunk.MyRoom.startingRow + firstChunk.MyRoom.rows );
+			}
+			else
+				Debug.LogError( "Ending chunk is diagnol from the starting chunk.  This shouldnt happen." );
+		}
+		else
+		{
+			cell.column = Mathf.FloorToInt( (firstChunk.X * numberColumnsInChunk) + (.5f * numberColumnsInChunk) );
+			cell.row = Mathf.FloorToInt( (firstChunk.Z * numberRowsInChunk) + (.5f * numberRowsInChunk) );
 		}
 	}
 
