@@ -10,10 +10,10 @@ public struct Cell { public int column, row;}
 public class Chunk
 {
 	public int X, Z;
+    public int Partition;
 
 	public class Room
 	{
-		public int Partition;
 		public int columns, rows, startingColumn, startingRow;
 	}
 
@@ -150,8 +150,10 @@ public class FloorGenerator : MonoBehaviour
 			for ( int z = 0; z < numChunksZ; z++ )
 			{
 				chunks[x, z] = new Chunk( x, z );
+                chunks[x, z].Partition = partitionCount;
+                partitionCount++;
 				chunks[x, z].CenterMarker = new GameObject();
-				chunks[x, z].CenterMarker.transform.position = new Vector3( (x * numberColumnsInChunk) + (x * .5f * numberColumnsInChunk), 2f, (z * numberRowsInChunk) + (z * .5f * numberRowsInChunk) );
+				chunks[x, z].CenterMarker.transform.position = new Vector3( (x * numberColumnsInChunk) + (.5f * numberColumnsInChunk), 2f, (z * numberRowsInChunk) + (.5f * numberRowsInChunk) );
 				chunks[x, z].CenterMarker.transform.parent = chunkObjectsParent;
 			}
 		}
@@ -220,7 +222,7 @@ public class FloorGenerator : MonoBehaviour
 			Chunk endingChunk = FindEndingChunk(startingChunk);
 
 			if ( endingChunk != null )
-				ConnectTwoRooms( startingChunk, endingChunk );
+				ConnectTwoChunks( startingChunk, endingChunk );
 		}
 
 		// Loop through all rooms to ensure all are in same partition if random finding is taking too long
@@ -230,11 +232,11 @@ public class FloorGenerator : MonoBehaviour
 			{
 				for ( int z = 0; z < numChunksZ; z++ )
 				{
-					Chunk startingChunk = FindRandomChunk();
+                    Chunk startingChunk = chunks[x, z];
 					Chunk endingChunk = FindEndingChunk( startingChunk );
 
 					if ( endingChunk != null )
-						ConnectTwoRooms( startingChunk, endingChunk );
+						ConnectTwoChunks( startingChunk, endingChunk );
 				}
 			}
 		}
@@ -249,8 +251,11 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int z = 0; z < numChunksZ; z++ )
 			{
-				if ( chunks[x, z].MyRoom != null )
-					zerothPartition = chunks[x, z].MyRoom.Partition;
+                if (chunks[x, z].MyRoom != null)
+                {
+                    zerothPartition = chunks[x, z].Partition;
+                    break;
+                }
 			}
 			if (zerothPartition != -1)
 				break;
@@ -260,7 +265,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int z = 0; z < numChunksZ; z++ )
 			{
-				if ( chunks[x, z].MyRoom != null && chunks[x, z].MyRoom.Partition != zerothPartition )
+				if ( chunks[x, z].MyRoom != null && chunks[x, z].Partition != zerothPartition )
 					return false;
 			}
 		}
@@ -288,8 +293,6 @@ public class FloorGenerator : MonoBehaviour
 
 		// Create the room, assign it the latest partition number, and then update the partition counter;
 		chunks[chunkColumn, chunkRow].SetRoom( roomColumns, roomRows, startingColumn, startingRow );
-		chunks[chunkColumn, chunkRow].MyRoom.Partition = partitionCount;
-		partitionCount++;
 
 		// DEBUG: Place center object here
 		chunks[chunkColumn, chunkRow].CenterMarker.transform.position = new Vector3( startingColumn + (roomColumns / 2), 1f, startingRow + (roomRows / 2) );
@@ -327,7 +330,7 @@ public class FloorGenerator : MonoBehaviour
 			for ( int z = 0; z < numChunksZ; z++ )
 			{
 				if (chunks[x,z].MyRoom != null)
-					Debug.Log( "Chunk " + x + ", " + z + " in partition " + chunks[x, z].MyRoom.Partition );
+					Debug.Log( "Chunk " + x + ", " + z + " in partition " + chunks[x, z].Partition );
 			}
 		}
 
@@ -399,90 +402,67 @@ public class FloorGenerator : MonoBehaviour
 		Chunk endingChunk = null;
 
 		int modifier = 1;
-		bool canRight, canDown, canLeft, canUp, canUpRight, canDownRight, canDownLeft, canUpLeft;
-		canRight = canDown = canLeft = canUp = canUpRight = canDownRight = canDownLeft = canUpLeft = true;
+        bool canRight, canDown, canLeft, canUp;
+		canRight = canDown = canLeft = canUp = true;
 
 		// Search the surrounding chunks for a room that can be patched with a hall that's not in the starting partition
 		while ( x + modifier < numChunksX || x - modifier >= 0 || z + modifier < numChunksZ || z - modifier >= 0 )
 		{
 			// Check right
-			if ( canRight && x + modifier < numChunksX && chunks[x + modifier, z].MyRoom != null )
+			if ( canRight && x + modifier < numChunksX)
 			{
-				canRight = false;
-				if ( startingChunk.MyRoom.Partition != chunks[x + modifier, z].MyRoom.Partition )
-				{
-					endingChunk = chunks[x + modifier, z];
-					break;
-				}
+                //if (chunks[x + modifier, z].MyRoom != null)
+                //    canRight = false;
+
+                if (startingChunk.Partition != chunks[x + modifier, z].Partition)
+                {
+                    endingChunk = chunks[x + modifier, z];
+                    break;
+                }
+                else
+                    canRight = false;
 			}
 			// Check Down
-			if ( canDown && z - modifier >= 0 && chunks[x, z - modifier].MyRoom != null )
+			if ( canDown && z - modifier >= 0 )
 			{
-				canDown = false;
-				if ( startingChunk.MyRoom.Partition != chunks[x, z - modifier].MyRoom.Partition )
-				{
-					endingChunk = chunks[x, z - modifier];
-					break;
-				}
+                //if (chunks[x, z - modifier].MyRoom != null)
+                //    canDown = false;
+
+                if (startingChunk.Partition != chunks[x, z - modifier].Partition)
+                {
+                    endingChunk = chunks[x, z - modifier];
+                    break;
+                }
+                else
+                    canDown = false;
 			}
 			// Check Left
-			if ( canLeft && x - modifier >= 0 && chunks[x - modifier, z].MyRoom != null )
+			if ( canLeft && x - modifier >= 0 )
 			{
-				canLeft = false;
-				if ( startingChunk.MyRoom.Partition != chunks[x - modifier, z].MyRoom.Partition )
-				{
-					endingChunk = chunks[x - modifier, z];
-					break;
-				}
+                //if ( chunks[x - modifier, z].MyRoom != null )
+                //    canLeft = false;
+
+                if (startingChunk.Partition != chunks[x - modifier, z].Partition)
+                {
+                    endingChunk = chunks[x - modifier, z];
+                    break;
+                }
+                else
+                    canLeft = false;
 			}
 			// Check Up
-			if ( canUp && z + modifier < numChunksZ && chunks[x, z + modifier].MyRoom != null )
+			if ( canUp && z + modifier < numChunksZ )
 			{
-				canUp = false;
-				if ( startingChunk.MyRoom.Partition != chunks[x, z + modifier].MyRoom.Partition )
-				{
-					endingChunk = chunks[x, z + modifier];
-					break;
-				}
-			}
-			// Check Bottom Right
-			if ( (canDown || canRight) && canDownRight && x + modifier < numChunksX && z - modifier >= 0 && chunks[x + modifier, z - modifier].MyRoom != null )
-			{
-				canDownRight = false;
-				if ( startingChunk.MyRoom.Partition != chunks[x + modifier, z - modifier].MyRoom.Partition )
-				{
-					endingChunk = chunks[x + modifier, z - modifier];
-					break;
-				}
-			}
-			// Check Bottom Left
-			if ( (canDown || canLeft) && canDownLeft && x - modifier >= 0 && z - modifier >= 0 && chunks[x - modifier, z - modifier].MyRoom != null )
-			{
-				canDownLeft = false;
-				if ( startingChunk.MyRoom.Partition != chunks[x - modifier, z - modifier].MyRoom.Partition )
-				{
-					endingChunk = chunks[x - modifier, z - modifier];
-					break;
-				}
-			}
-			// Check Top Right
-			if ( (canLeft || canUp) && canUpLeft && x - modifier >= 0 && z + modifier < numChunksZ && chunks[x - modifier, z + modifier].MyRoom != null )
-			{
-				canUpLeft = false;
-				if ( startingChunk.MyRoom.Partition != chunks[x - modifier, z + modifier].MyRoom.Partition )
-				{
-					endingChunk = chunks[x - modifier, z + modifier];
-					break;
-				}
-			}
-			// Check Top Left
-			if ( (canRight || canUp) && canUpRight && x + modifier < numChunksX && z + modifier < numChunksZ && chunks[x + modifier, z + modifier].MyRoom != null )
-			{
-				if ( startingChunk.MyRoom.Partition != chunks[x + modifier, z + modifier].MyRoom.Partition )
-				{
-					endingChunk = chunks[x + modifier, z + modifier];
-					break;
-				}
+                //if (chunks[x, z + modifier].MyRoom != null)
+                //    canUp = false;
+
+                if (startingChunk.Partition != chunks[x, z + modifier].Partition)
+                {
+                    endingChunk = chunks[x, z + modifier];
+                    break;
+                }
+                else
+                    canUp = false;
 			}
 
 			modifier++;
@@ -491,17 +471,17 @@ public class FloorGenerator : MonoBehaviour
 		return endingChunk;
 	}
 
-	private void ConnectTwoRooms(Chunk startingChunk, Chunk endingChunk)
+	private void ConnectTwoChunks(Chunk startingChunk, Chunk endingChunk)
 	{
-		int newPartition = startingChunk.MyRoom.Partition;
-		int oldPartition = endingChunk.MyRoom.Partition;
+		int newPartition = startingChunk.Partition;
+		int oldPartition = endingChunk.Partition;
 
 		for ( int x = 0; x < numChunksX; x++ )
 		{
 			for ( int z = 0; z < numChunksZ; z++ )
 			{
-				if ( chunks[x, z].MyRoom != null && chunks[x, z].MyRoom.Partition == oldPartition )
-					chunks[x, z].MyRoom.Partition = newPartition;
+				if ( chunks[x, z].Partition == oldPartition )
+					chunks[x, z].Partition = newPartition;
 			}
 		}
 
