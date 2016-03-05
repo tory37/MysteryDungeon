@@ -32,10 +32,11 @@ public class LevelManager : MonoBehaviour
 
 	private void Start()
 	{
+		Instance = this;
+
 		FloorGenerator floorGen = GetComponent<FloorGenerator>();
 
 		floorCells = floorGen.GenerateFloor();
-
 	}
 
 	#endregion
