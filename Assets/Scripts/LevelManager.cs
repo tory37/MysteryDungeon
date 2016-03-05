@@ -18,6 +18,13 @@ public class LevelManager : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// This represents the current character being controlled.
+	/// There will be public functions for switching characters, outside scripts should not be ablet o directly modify this.
+	/// </summary>
+	[HideInInspector]
+	public IControllable CurrentControllable { get; private set; }
+
 	#endregion
 
 	#region Private Interface

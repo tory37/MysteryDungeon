@@ -541,7 +541,8 @@ public class FloorGenerator : MonoBehaviour
 			}
 		}
 
-		List<Cell> path = FindPathInterpolate( startingChunk, endingChunk );
+		List<Cell> path = FindPathSimple( startingChunk, endingChunk );
+		//List<Cell> path = FindPathInterpolate( startingChunk, endingChunk );
 
 		for (int i = 0; i < path.Count; i++)
 		{
@@ -571,6 +572,143 @@ public class FloorGenerator : MonoBehaviour
 		{
 			Debug.LogError( "newLine is null." );
 		}
+	}
+
+	private List<Cell> FindPathSimple (Chunk startingChunk, Chunk endingChunk)
+	{
+		List<Cell> path = new List<Cell>();
+
+		// Find the starting tile
+		Cell startCell = new Cell();
+
+		FindFirstChunkPathCell( ref startCell, startingChunk, endingChunk );
+
+		// Find ending tile
+		Cell endCell = new Cell();
+
+		FindFirstChunkPathCell( ref endCell, endingChunk, startingChunk );
+
+		int dx = endCell.column - startCell.column;
+		int dz = endCell.row - startCell.row;
+
+		path.Add( startCell );
+
+		// End is North
+		if (endingChunk.Z > startingChunk.Z)
+		{
+			// Cells are too close for a jag
+			if (dz == 3 || dz == 2)
+				startCell.column = endCell.column;
+
+			int randomMid = UnityEngine.Random.Range( startCell.row + 1, endCell.row );
+			// 1. Go North
+			for (int row = startCell.row+1; row <= randomMid; row++)
+				path.Add( new Cell( startCell.column, row ) );
+			// 2. Go East
+			if (dx > 0)
+			{
+				for ( int col = startCell.column; col <= endCell.column; col++ )
+					path.Add( new Cell( col, randomMid ) );
+			}
+			// 2. Go West
+			else
+			{
+				for ( int col = startCell.column; col >= endCell.column; col-- )
+					path.Add( new Cell( col, randomMid ) );
+			}
+			// 3. Go North
+			for ( int row = randomMid; row <= endCell.row; row++ )
+				path.Add( new Cell( endCell.column, row ) );
+		}
+		// End is East
+		if ( endingChunk.X > startingChunk.X )
+		{
+			// Cells are too close for a jag
+			if ( dx == 3 || dx == 2 )
+				startCell.row = endCell.row;
+
+			int randomMid = UnityEngine.Random.Range( startCell.column + 1, endCell.column );
+			// 1. Go East
+			for ( int col = startCell.column+1; col <= randomMid; col++ )
+			{
+				path.Add( new Cell(col, startCell.row ) );
+			}
+			// 2. Go North
+			if ( dz > 0 )
+			{
+				for ( int row = startCell.row; row <= endCell.row; row++ )
+					path.Add( new Cell( randomMid, row ) );
+			}
+			// 2. Go South
+			else
+			{
+				for ( int row = startCell.row; row >= endCell.row; row-- )
+					path.Add( new Cell( randomMid, row ) );
+			}
+			// 3. Go East
+			for ( int col = randomMid; col <= endCell.column; col++ )
+				path.Add( new Cell( col, endCell.row ) );
+		}
+		// End is South
+		if ( endingChunk.Z < startingChunk.Z )
+		{
+			// Cells are too close for a jag
+			if ( dz == -3 || dz == -2 )
+				startCell.column = endCell.column;
+
+			int randomMid = UnityEngine.Random.Range( endCell.row-1, startCell.row );
+			// 1. Go South
+			for ( int row = startCell.row-1; row >= randomMid; row-- )
+			{
+				path.Add( new Cell( startCell.column, row ) );
+			}
+			// 2. Go East
+			if ( dx > 0 )
+			{
+				for ( int col = startCell.column; col <= endCell.column; col++ )
+					path.Add( new Cell( col, randomMid ) );
+			}
+			// 2. Go West
+			else
+			{
+				for ( int col = endCell.column; col >= startCell.column; col-- )
+					path.Add( new Cell( col, randomMid ) );
+			}
+			// 3. Go North
+			for ( int row = randomMid; row >= endCell.row; row-- )
+				path.Add( new Cell( endCell.column, row ) );
+		}
+		// End is West
+		if ( endingChunk.X < startingChunk.X )
+		{
+			// Cells are too close for a jag
+			if ( dx == -3 || dx == -2 )
+				startCell.row = endCell.row;
+
+			int randomMid = UnityEngine.Random.Range( endCell.column-1, startCell.column );
+			// 1. Go West
+			for ( int col = startCell.column-1; col >= randomMid; col-- )
+			{
+				path.Add( new Cell( col, endCell.row ) );
+			}
+			// 2. Go North
+			if ( dz > 0 )
+			{
+				for ( int row = startCell.row; row <= endCell.row; row++ )
+					path.Add( new Cell( randomMid, row ) );
+			}
+			// 2. Go South
+			else
+			{
+				for ( int row = startCell.row; row >= endCell.row; row-- )
+					path.Add( new Cell( randomMid, row ) );
+			}
+			// 3. Go West
+			for ( int col = randomMid; col >= endCell.column; col-- )
+				path.Add( new Cell( col, endCell.row ) );
+		}
+
+		return path;
 	}
 
 	private List<Cell> FindPathInterpolate( Chunk startingChunk, Chunk endingChunk )
