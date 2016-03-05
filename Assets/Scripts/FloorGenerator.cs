@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System;
 
 public enum ChunkStatus { Occupied, Unoccupied };
-public enum TileStatus { HasWall, NoWall };
+public enum CellStatus { HasWall, NoWall };
 
 /// <summary>
 /// This class is used to generate the floor at the beginning of a level, or "floor."  
@@ -153,12 +153,26 @@ public class FloorGenerator : MonoBehaviour
 
 	#endregion
 
+	#region Public Interface
+
+	public CellStatus[,] GenerateFloor()
+	{
+		ResetFloor();
+		GenerateRooms();
+		ConnectAllRooms();
+		DrawFloor();
+
+		return floorCells;
+	}
+
+	#endregion
+
 	#region Private Fields
 
 	/// <summary>
 	/// Represents the tiles in the floor
 	/// </summary>
-	private TileStatus[,] floorCells;
+	private CellStatus[,] floorCells;
 
 	private int totalNumChunks;
 
@@ -179,11 +193,6 @@ public class FloorGenerator : MonoBehaviour
 
 		numberColumnsInChunk = Mathf.FloorToInt( numColumnsInFloor / numChunksX );
 		numberRowsInChunk = Mathf.FloorToInt( numRowsInFloor / numChunksZ );
-
-		ResetFloor();
-		GenerateRooms();
-		ConnectAllRooms();
-		DrawFloor();
 	}
 
 	#endregion
@@ -192,7 +201,7 @@ public class FloorGenerator : MonoBehaviour
 
 	private void ResetFloor()
 	{
-		floorCells = new TileStatus[numColumnsInFloor, numRowsInFloor];
+		floorCells = new CellStatus[numColumnsInFloor, numRowsInFloor];
 
 		chunks = new Chunk[numChunksX, numChunksZ];
 
@@ -217,7 +226,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int width = 0; width < numRowsInFloor; width++ )
 			{
-				floorCells[column, width] = TileStatus.HasWall;
+				floorCells[column, width] = CellStatus.HasWall;
 			}
 		}
 	}
@@ -357,13 +366,13 @@ public class FloorGenerator : MonoBehaviour
 			{
 				try
 				{
-					if ( (column == startingColumn && column > 0 && floorCells[column - 1, row] == TileStatus.NoWall)
-					   || (column == (roomColumns + startingColumn) - 1 && column < numColumnsInFloor - 1 && floorCells[column + 1, row] == TileStatus.NoWall)
-					   || (row == startingRow && row > 0 && floorCells[column, row - 1] == TileStatus.NoWall)
-					   || (row == (roomRows + startingRow) - 1 && row < numRowsInFloor - 1 && floorCells[column, row + 1] == TileStatus.NoWall) )
+					if ( (column == startingColumn && column > 0 && floorCells[column - 1, row] == CellStatus.NoWall)
+					   || (column == (roomColumns + startingColumn) - 1 && column < numColumnsInFloor - 1 && floorCells[column + 1, row] == CellStatus.NoWall)
+					   || (row == startingRow && row > 0 && floorCells[column, row - 1] == CellStatus.NoWall)
+					   || (row == (roomRows + startingRow) - 1 && row < numRowsInFloor - 1 && floorCells[column, row + 1] == CellStatus.NoWall) )
 						Debug.Log( "Tile " + column + ", " + row + " did not get placed to maintain a wall on a side." );
-					else if ( floorCells[column, row] == TileStatus.HasWall )
-						floorCells[column, row] = TileStatus.NoWall;
+					else if ( floorCells[column, row] == CellStatus.HasWall )
+						floorCells[column, row] = CellStatus.NoWall;
 					else
 						Debug.LogError( "During room generation, we tried to remove wall: " + column + ", " + row + ".  It had already been removed." );
 				}
@@ -392,7 +401,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int row = 0; row < numRowsInFloor; row++ )
 			{
-				if ( floorCells[column, row] == TileStatus.HasWall )
+				if ( floorCells[column, row] == CellStatus.HasWall )
 				{
 					GameObject wall = GameObject.Instantiate( wallTestObject, new Vector3( column, .5f, row ), Quaternion.identity ) as GameObject;
 					wall.transform.parent = wallsParent;
@@ -538,7 +547,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			int column = path[i].column;
 			int row = path[i].row;
-			floorCells[column, row] = TileStatus.NoWall;
+			floorCells[column, row] = CellStatus.NoWall;
 		}
 
 		//FindPath( startingChunk, endingChunk );
@@ -665,7 +674,7 @@ public class FloorGenerator : MonoBehaviour
 
 		for (int i = 0; i < path.Count; i++)
 		{
-			floorCells[path[i].cell.column, path[i].cell.row] = TileStatus.NoWall;
+			floorCells[path[i].cell.column, path[i].cell.row] = CellStatus.NoWall;
 		}
 	}
 
