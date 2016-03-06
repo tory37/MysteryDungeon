@@ -38,8 +38,20 @@ public class FloorGenerator : MonoBehaviour
 
 	private class Chunk
 	{
+		/// <summary>
+		/// X and Z index of the chunk
+		/// </summary>
 		public int X, Z;
+		/// <summary>
+		/// The partition this chunk lies in for connecting
+		/// chunks together
+		/// </summary>
 		public int Partition;
+		/// <summary>
+		/// Random X and Z index that paths will connect to 
+		/// if this chunk doesn't have a room
+		/// </summary>
+		public int randX, randZ;
 
 		public class Room
 		{
@@ -51,12 +63,14 @@ public class FloorGenerator : MonoBehaviour
 
 		public GameObject CenterMarker;
 
-		public Chunk( int x, int z )
+		public Chunk( int x, int z, int randX, int randZ )
 		{
 			X = x;
 			Z = z;
 			Status = ChunkStatus.Unoccupied;
 			MyRoom = null;
+			this.randX = randX;
+			this.randZ = randZ;
 		}
 
 		public void SetRoom( int columns, int rows, int startingColumn, int startingRow )
@@ -176,8 +190,8 @@ public class FloorGenerator : MonoBehaviour
 
 	private int totalNumChunks;
 
-	private int numberColumnsInChunk;
-	private int numberRowsInChunk;
+	private int numColumnsInChunk;
+	private int numRowsInChunk;
 
 	private Chunk[,] chunks;
 
@@ -191,8 +205,8 @@ public class FloorGenerator : MonoBehaviour
 	{
 		totalNumChunks = numChunksX * numChunksZ;
 
-		numberColumnsInChunk = Mathf.FloorToInt( numColumnsInFloor / numChunksX );
-		numberRowsInChunk = Mathf.FloorToInt( numRowsInFloor / numChunksZ );
+		numColumnsInChunk = Mathf.FloorToInt( numColumnsInFloor / numChunksX );
+		numRowsInChunk = Mathf.FloorToInt( numRowsInFloor / numChunksZ );
 	}
 
 	#endregion
@@ -212,11 +226,11 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int z = 0; z < numChunksZ; z++ )
 			{
-				chunks[x, z] = new Chunk( x, z );
+				chunks[x, z] = new Chunk( x, z, UnityEngine.Random.Range( numColumnsInChunk * x + 1, numColumnsInChunk * (x + 1) - 1 ), UnityEngine.Random.Range( numRowsInChunk * z + 1, numRowsInChunk * (z + 1) - 1 ) );
 				chunks[x, z].Partition = partitionCount;
 				partitionCount++;
 				chunks[x, z].CenterMarker = new GameObject();
-				chunks[x, z].CenterMarker.transform.position = new Vector3( (x * numberColumnsInChunk) + (.5f * numberColumnsInChunk), 2f, (z * numberRowsInChunk) + (.5f * numberRowsInChunk) );
+				chunks[x, z].CenterMarker.transform.position = new Vector3( (x * numColumnsInChunk) + (.5f * numColumnsInChunk), 2f, (z * numRowsInChunk) + (.5f * numRowsInChunk) );
 				chunks[x, z].CenterMarker.transform.parent = chunkObjectsParent;
 			}
 		}
@@ -341,15 +355,15 @@ public class FloorGenerator : MonoBehaviour
 		//Debug.Log( "Room In Chunk: " + chunkColumn + ", " + chunkRow );
 		chunks[chunkColumn, chunkRow].Status = ChunkStatus.Occupied;
 
-		int roomColumns = UnityEngine.Random.Range( minRoomColumns, maxRoomColumns < numberColumnsInChunk ? maxRoomColumns : numberColumnsInChunk );
-		int roomRows = UnityEngine.Random.Range( minRoomRows, maxRoomRows < numberRowsInChunk ? maxRoomRows : numberRowsInChunk );
+		int roomColumns = UnityEngine.Random.Range( minRoomColumns, maxRoomColumns < numColumnsInChunk ? maxRoomColumns : numColumnsInChunk );
+		int roomRows = UnityEngine.Random.Range( minRoomRows, maxRoomRows < numRowsInChunk ? maxRoomRows : numRowsInChunk );
 		//Debug.Log( "Columns: " + roomColumns );
 		//Debug.Log( "Rows: " + roomRows );
 
-		int leastColumn = chunkColumn * numberColumnsInChunk;
-		int maxColumn = ((chunkColumn + 1) * numberColumnsInChunk) - roomColumns;
-		int leastRow = chunkRow * numberRowsInChunk;
-		int maxRow = ((chunkRow + 1) * numberRowsInChunk) - roomRows;
+		int leastColumn = chunkColumn * numColumnsInChunk;
+		int maxColumn = ((chunkColumn + 1) * numColumnsInChunk) - roomColumns;
+		int leastRow = chunkRow * numRowsInChunk;
+		int maxRow = ((chunkRow + 1) * numRowsInChunk) - roomRows;
 
 		int startingColumn = UnityEngine.Random.Range( leastColumn, maxColumn );
 		int startingRow = UnityEngine.Random.Range( leastRow, maxRow );
@@ -596,9 +610,9 @@ public class FloorGenerator : MonoBehaviour
 		// End is North
 		if (endingChunk.Z > startingChunk.Z)
 		{
-			// Cells are too close for a jag
-			if (dz == 3 || dz == 2)
-				startCell.column = endCell.column;
+			//// Cells are too close for a jag
+			//if (dz == 3 || dz == 2)
+			//	startCell.column = endCell.column;
 
 			int randomMid = UnityEngine.Random.Range( startCell.row + 1, endCell.row );
 			// 1. Go North
@@ -623,9 +637,9 @@ public class FloorGenerator : MonoBehaviour
 		// End is East
 		if ( endingChunk.X > startingChunk.X )
 		{
-			// Cells are too close for a jag
-			if ( dx == 3 || dx == 2 )
-				startCell.row = endCell.row;
+			//// Cells are too close for a jag
+			//if ( dx == 3 || dx == 2 )
+			//	startCell.row = endCell.row;
 
 			int randomMid = UnityEngine.Random.Range( startCell.column + 1, endCell.column );
 			// 1. Go East
@@ -652,9 +666,9 @@ public class FloorGenerator : MonoBehaviour
 		// End is South
 		if ( endingChunk.Z < startingChunk.Z )
 		{
-			// Cells are too close for a jag
-			if ( dz == -3 || dz == -2 )
-				startCell.column = endCell.column;
+			//// Cells are too close for a jag
+			//if ( dz == -3 || dz == -2 )
+			//	startCell.column = endCell.column;
 
 			int randomMid = UnityEngine.Random.Range( endCell.row-1, startCell.row );
 			// 1. Go South
@@ -671,7 +685,7 @@ public class FloorGenerator : MonoBehaviour
 			// 2. Go West
 			else
 			{
-				for ( int col = endCell.column; col >= startCell.column; col-- )
+				for ( int col = startCell.column; col >= endCell.column; col-- )
 					path.Add( new Cell( col, randomMid ) );
 			}
 			// 3. Go North
@@ -681,15 +695,15 @@ public class FloorGenerator : MonoBehaviour
 		// End is West
 		if ( endingChunk.X < startingChunk.X )
 		{
-			// Cells are too close for a jag
-			if ( dx == -3 || dx == -2 )
-				startCell.row = endCell.row;
+			//// Cells are too close for a jag
+			//if ( dx == -3 || dx == -2 )
+			//	startCell.row = endCell.row;
 
 			int randomMid = UnityEngine.Random.Range( endCell.column-1, startCell.column );
 			// 1. Go West
 			for ( int col = startCell.column-1; col >= randomMid; col-- )
 			{
-				path.Add( new Cell( col, endCell.row ) );
+				path.Add( new Cell( col, startCell.row ) );
 			}
 			// 2. Go North
 			if ( dz > 0 )
@@ -902,8 +916,8 @@ public class FloorGenerator : MonoBehaviour
 		}
 		else
 		{
-			cell.column = Mathf.FloorToInt( (firstChunk.X * numberColumnsInChunk) + (.5f * numberColumnsInChunk) );
-			cell.row = Mathf.FloorToInt( (firstChunk.Z * numberRowsInChunk) + (.5f * numberRowsInChunk) );
+			cell.column = firstChunk.randX; //Mathf.FloorToInt( (firstChunk.X * numColumnsInChunk) + (.5f * numColumnsInChunk) );
+			cell.row = firstChunk.randZ; //Mathf.FloorToInt( (firstChunk.Z * numRowsInChunk) + (.5f * numRowsInChunk) );
 		}
 	}
 
