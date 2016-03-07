@@ -6,6 +6,27 @@ using System;
 public enum ChunkStatus { Occupied, Unoccupied };
 public enum CellStatus { HasWall, NoWall };
 
+public class Cell
+{
+	public int column, row;
+
+	public Cell()
+	{
+		column = row = 0;
+	}
+
+	public Cell( int column, int row )
+	{
+		this.column = column;
+		this.row = row;
+	}
+
+	public Vector3 ToVector3()
+	{
+		return new Vector3( column, 0f, row );
+	}
+}
+
 /// <summary>
 /// This class is used to generate the floor at the beginning of a level, or "floor."  
 /// The process is described below:
@@ -19,22 +40,6 @@ public enum CellStatus { HasWall, NoWall };
 public class FloorGenerator : MonoBehaviour
 {
 	#region Private Data Structures
-
-	private class Cell
-	{
-		public int column, row;
-
-		public Cell()
-		{
-			column = row = 0;
-		}
-
-		public Cell( int column, int row )
-		{
-			this.column = column;
-			this.row = row;
-		}
-	}
 
 	private class Chunk
 	{
@@ -169,8 +174,11 @@ public class FloorGenerator : MonoBehaviour
 
 	#region Public Interface
 
-	public CellStatus[,] GenerateFloor()
+	public CellStatus[,] GenerateFloor(ref int numColumns, ref int numRows)
 	{
+		numColumns = numColumnsInFloor;
+		numRows = numRowsInFloor;
+
 		ResetFloor();
 		GenerateRooms();
 		ConnectAllRooms();
