@@ -24,8 +24,7 @@ public class LMWaitForInput : State
 
 		if ( vertical > .5f || horizontal > .5f )
 		{
-			if ( fsm.CurrentControllable.CanMove( ) 
-				fsm.AttemptTransition(LevelManager.States.MoveParticipants);
+
 		}
 	}
 
