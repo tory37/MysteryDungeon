@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
-public class LMWaitForInput : State
+public class LMGetPlayerInput : State
 {
 
 	#region Private Interface
@@ -14,7 +15,12 @@ public class LMWaitForInput : State
 
 	public override void Initialize( MonoFSM callingfsm )
 	{
-		
+		try	{
+			fsm = (LevelManager)callingfsm;
+		}
+		catch (Exception e)	{
+			Debug.LogError("State LMWaitForInput is being initialized by something other than a LevelManager.");
+		}
 	}
 
 	public override void OnUpdate()

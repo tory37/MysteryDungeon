@@ -60,6 +60,8 @@ public abstract class MonoFSM : MonoBehaviour
 
 	#endregion
 
+	#region Protected Fields
+
 	/// <summary>
 	/// This is a list of states in the fsm
 	/// Each state can easily be referenced by their corresponding enum value.
@@ -69,18 +71,26 @@ public abstract class MonoFSM : MonoBehaviour
 	protected Dictionary<int, State> states;
 
 	[SerializeField, HideInInspector]
-	protected List<FSMTransition> validTransitions = new List<FSMTransition>();
+	protected List<FSMTransition> validTransitions;
 
 	/// <summary>
 	/// This represents what state the machine is currently in
 	/// </summary>
-	State currentState = null;
+	protected State currentState;
+
+	#endregion
+
+	#region Mono Methods
 
 	/// <summary>
 	/// Calls SetStates, SetTransitions, Initialize, then calls initialize on each state in the fsm. 
 	/// </summary>
 	protected virtual void Start()
 	{
+		validTransitions = new List<FSMTransition>();
+
+		currentState = null;
+
 		SetStates();
 
 		Initialize();
@@ -93,6 +103,10 @@ public abstract class MonoFSM : MonoBehaviour
 		currentState = states.Values.ElementAt( 0 );
 		currentState.OnEnter();
 	}
+
+	#endregion
+
+	#region Private / Protected Methods
 
 	/// <summary>
 	/// Initialize the dictionary of Enum to States in this function.
@@ -160,6 +174,10 @@ public abstract class MonoFSM : MonoBehaviour
 			throw new Exception( "State " + toState + " is not defined, check if your string is correct." );
 	}
 
+	#endregion
+
+	#region Public Interface
+
 	/// <summary>
 	/// This checks to see if the  
 	/// </summary>
@@ -186,6 +204,7 @@ public abstract class MonoFSM : MonoBehaviour
 			Debug.Log( "FSM does not cannot transition to state " + to.ToString() + " from current state: " + currentState.Identifier );
 	}
 
+	#endregion
 }
 
 /// <summary>

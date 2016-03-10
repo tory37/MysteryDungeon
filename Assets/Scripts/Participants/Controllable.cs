@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Controllable : Participant
+public abstract class Controllable : Participant
 {
 	#region Private Interface
 

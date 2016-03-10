@@ -2,14 +2,16 @@
 using System.Collections;
 using System.Collections.Generic;
 
+public enum LevelManager_States
+{
+	ExamineNextParticipant,
+	WaitForParticipantAction,
+	MoveParticipants,
+	GetPlayerInput
+}
+
 public class LevelManager : MonoFSM
 {
-	public enum States
-	{
-		GetPlayerInput,
-
-	}
-
 	#region Editor Interface
 
 	[SerializeField]
@@ -18,9 +20,9 @@ public class LevelManager : MonoFSM
 	[SerializeField, Tooltip( "The time between intervals, for pseudo character movement animation." )]
 	private float characterMoveTime;
 
-	// TESTING: Remove
+	// TEMP: Remove this guy, he's just for practice and testing
 	[SerializeField]
-	Controllable currentChar;
+	private Controllable tempLeader;
 
 	#endregion
 
@@ -38,21 +40,109 @@ public class LevelManager : MonoFSM
 		}
 	}
 
-	/// <summary>
-	/// This represents the current character being controlled.
-	/// There will be public functions for switching characters, outside scripts should not be ablet o directly modify this.
-	/// </summary>
-	[HideInInspector]
-	public Controllable CurrentControllable { get; private set; }
-
 	public int NumColumns { get; private set; }
 	public int NumRows { get; private set; }
 	public CellStatus[,] FloorCells { get { return floorCells; } }
+	public int CurrentParticipantIndex { get { return currentParticipantIndex; } }
+	public Controllable ControlledLeader { get { return controlledLeader; } }
+	public List<Participant> FloorParticipants { get { return floorParticipants; } }
 
-    /// <summary>
-    /// The list of the participants on the floor
-    /// </summary>
-    public List<Participant> floorParticipants;
+	public void ChangeLeader(Controllable controllable)
+	{
+		// Get references to old and new leader
+		Controllable oldLeader = controlledLeader;
+		Controllable newLeader = controllable;
+
+		// Get their indexes in the list
+		int oldLeaderindex = floorParticipants.IndexOf( oldLeader );
+		int newLeaderIndex = floorParticipants.IndexOf( newLeader );
+
+		// Switch their order in the list
+		floorParticipants[oldLeaderindex] = newLeader;
+		floorParticipants[newLeaderIndex] = oldLeader;
+
+		// Set the new leader
+		controlledLeader = controllable;
+	}
+
+	/// <summary>
+	/// Registers a participant to the turn queue
+	/// </summary>
+	/// <param name="participant"></param>
+	public void RegisterParticipant(Participant participant)
+	{
+		newParticipants.Enqueue( participant );
+	}
+
+	/// <summary>
+	/// Removes a participant from the turn queue
+	/// </summary>
+	/// <param name="participant"></param>
+	public void UnregisterParticipant(Participant participant)
+	{
+		deadParticipants.Enqueue( participant );
+	}
+
+	public void RegisterNewParticipants()
+	{
+		while ( newParticipants.Count > 0 )
+		{
+			Participant participant = newParticipants.Dequeue();
+
+			int index = 0;
+
+			for ( int i = 0; i < floorParticipants.Count; i++ )
+			{
+				if ( participant.Speed > floorParticipants[i].Speed )
+				{
+					index = i;
+					break;
+				}
+			}
+
+			floorParticipants.Insert( index, participant );
+		}
+	}
+
+	public void RemoveDeadParticipants()
+	{
+		while ( newParticipants.Count > 0 )
+		{
+			Participant participant = deadParticipants.Dequeue();
+
+			floorParticipants.Remove( participant );
+		}
+	}
+
+	#endregion
+
+	#region Private Fields
+
+	/// <summary>
+	/// The Singleton instance of this class
+	/// </summary>
+	private static LevelManager instance;
+
+	/// <summary>
+	/// The 2D Array representation of the floor
+	/// </summary>
+	private CellStatus[,] floorCells;
+
+	/// <summary>
+	/// The current leader, the main controllable
+	/// </summary>
+	private Controllable controlledLeader;
+
+	/// <summary>
+	/// The list of the participants on the floor
+	/// </summary>
+	private List<Participant> floorParticipants;
+
+	private Queue<Participant> newParticipants;
+
+	private Queue<Participant> deadParticipants;
+
+	private int currentParticipantIndex;
 
 	#endregion
 
@@ -69,22 +159,9 @@ public class LevelManager : MonoFSM
 		NumColumns = numColumns;
 		NumRows = numRows;
 
-		CurrentControllable = currentChar;
+		floorParticipants = new List<Participant>();
+		currentParticipantIndex = 0;
 	}
-
-	#endregion
-
-	#region Private Fields
-
-	/// <summary>
-	/// The Singleton instance of this class
-	/// </summary>
-	private static LevelManager instance;
-
-	/// <summary>
-	/// The 2D Array representation of the floor
-	/// </summary>
-	private CellStatus[,] floorCells;
 
 	#endregion
 }
