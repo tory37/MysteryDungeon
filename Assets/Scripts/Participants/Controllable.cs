@@ -5,11 +5,17 @@ public abstract class Controllable : Participant
 {
 	#region Private Interface
 
-	
 
 	#endregion
 
 	#region Public Interface
+
+
+	public bool IsLeader
+	{
+		get;
+		set;
+	}
 
 	/// <summary>
 	/// Keeps track of the current position of 

@@ -56,7 +56,7 @@ public abstract class Participant : MonoFSM
 
 	#region FSM Overrides
 
-	protected override void Initialize()
+	private void Awake()
 	{
 		LevelManager.Instance.RegisterParticipant( this );
 	}

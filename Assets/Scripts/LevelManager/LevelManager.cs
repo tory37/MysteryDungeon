@@ -4,8 +4,8 @@ using System.Collections.Generic;
 
 public enum LevelManager_States
 {
-	ExamineNextParticipant,
-	WaitForParticipantAction,
+	DetermineNextParticipantTurn,
+	TakeParticipantAction,
 	MoveParticipants,
 	GetPlayerInput
 }
@@ -71,6 +71,23 @@ public class LevelManager : MonoFSM
 	/// <param name="participant"></param>
 	public void RegisterParticipant(Participant participant)
 	{
+		if (newParticipants == null)
+		{
+			newParticipants = new Queue<Participant>();
+		}
+
+		Controllable controllable = participant as Controllable;
+		if (controllable != null && controllable.IsLeader == true)
+		{
+			if (controlledLeader == null)
+			{
+				controlledLeader = controllable;
+			}
+			else
+			{
+				ChangeLeader( controllable );
+			}
+		}
 		newParticipants.Enqueue( participant );
 	}
 
@@ -85,6 +102,9 @@ public class LevelManager : MonoFSM
 
 	public void RegisterNewParticipants()
 	{
+		if ( floorParticipants == null )
+			floorParticipants = new List<Participant>();
+
 		while ( newParticipants.Count > 0 )
 		{
 			Participant participant = newParticipants.Dequeue();
@@ -113,6 +133,34 @@ public class LevelManager : MonoFSM
 			floorParticipants.Remove( participant );
 		}
 	}
+
+	/// <summary>
+	/// This is for looking at data about the next participant in the list,
+	/// but not actually applying it's turn.
+	/// </summary>
+	/// <returns>The current participant in the list.</returns>
+	public Participant PeekCurrentParticipant()
+	{
+		return floorParticipants[currentParticipantIndex];
+	}
+
+	/// <summary>
+	/// Use this when analyzing a participant for a turn.
+	/// This increments the counter that keeps track of which participant's turn is next.
+	/// </summary>
+	/// <returns>The next participant in the list.</returns>
+	public Participant ActOnCurrentParticipant()
+	{
+		Participant p = floorParticipants[currentParticipantIndex];
+		IncrementCurrentParticipantIndex();
+		return p;
+	}
+
+	#endregion
+
+	#region State Shared Variables
+
+	public List<Participant> ParticipantsToMove { get; set; }
 
 	#endregion
 
@@ -146,12 +194,19 @@ public class LevelManager : MonoFSM
 
 	#endregion
 
+	#region Mono Methods
+
+	private void Awake()
+	{
+		Instance = this;
+	}
+
+	#endregion
+
 	#region FSM Overrides
 
 	protected override void Initialize()
 	{
-		Instance = this;
-
 		FloorGenerator floorGen = GetComponent<FloorGenerator>();
 
 		int numColumns = 0, numRows = 0;
@@ -159,8 +214,30 @@ public class LevelManager : MonoFSM
 		NumColumns = numColumns;
 		NumRows = numRows;
 
-		floorParticipants = new List<Participant>();
+		if (floorParticipants == null)
+			floorParticipants = new List<Participant>();
+	
 		currentParticipantIndex = 0;
+	}
+
+	#endregion
+
+	#region Private Methods
+
+	private void IncrementCurrentParticipantIndex()
+	{
+		if ( currentParticipantIndex < floorParticipants.Count )
+			currentParticipantIndex++;
+		else
+			currentParticipantIndex = 0;
+	}
+
+	private void DecrementCurrentParticipantIndex()
+	{
+		if ( currentParticipantIndex == 0 )
+			currentParticipantIndex = floorParticipants.Count;
+		else
+			currentParticipantIndex--;
 	}
 
 	#endregion
