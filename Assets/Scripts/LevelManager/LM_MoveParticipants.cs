@@ -46,7 +46,7 @@ public class LM_MoveParticipants : State
 		for ( int i = 0; i < fsm.ParticipantsToMove.Count; i++ )
 		{
 			Participant p = fsm.ParticipantsToMove[i];
-			directions.Add( (new Vector3( p.Column, 0f, p.Row ) - p.transform.position).normalized );
+			directions.Add( (new Vector3( p.Column, p.transform.position.y, p.Row ) - p.transform.position).normalized );
 		}
 	}
 
@@ -57,6 +57,7 @@ public class LM_MoveParticipants : State
 			Participant p = fsm.ParticipantsToMove[i];
 			p.transform.Translate(directions[i] * moveSpeed * Time.deltaTime);
 		}
+        deltaMove += moveSpeed * Time.deltaTime;
 	}
 
 	public override void CheckTransitions()

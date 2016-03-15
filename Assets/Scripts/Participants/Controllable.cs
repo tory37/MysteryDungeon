@@ -22,17 +22,28 @@ public abstract class Controllable : Participant
 		newColumn = Column;
 		newRow = Row;
 
+        int newC = Column;
+        int newR = Row;
+
 		if ( vertical > .5f )
-			newColumn = newColumn + 1;
+            newR = newR + 1;
 		else if ( vertical < -.5f )
-			newColumn = newColumn - 1;
+            newR = newR - 1;
 
 		if ( horizontal > .5f )
-			newColumn = newColumn + 1;
+            newC = newC + 1;
 		else if ( horizontal < -.5f )
-			newColumn = newColumn - 1;
+            newC = newC - 1;
 
-		return true;
+        if (LevelManager.Instance.FloorCells[newC, newR] == CellStatus.UnOccupied)
+        {
+            newColumn = newC;
+            newRow = newR;
+
+            return true;
+        }
+        else
+           return false;
 	}
 
 	#endregion

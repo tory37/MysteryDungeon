@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System;
 
 public enum ChunkStatus { Occupied, Unoccupied };
-public enum CellStatus { HasWall, NoWall };
+public enum CellStatus { Occupied, UnOccupied };
 
 public class Cell
 {
@@ -242,7 +242,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int width = 0; width < numRowsInFloor; width++ )
 			{
-				floorCells[column, width] = CellStatus.HasWall;
+				floorCells[column, width] = CellStatus.Occupied;
 			}
 		}
 	}
@@ -382,13 +382,13 @@ public class FloorGenerator : MonoBehaviour
 			{
 				try
 				{
-					if ( (column == startingColumn && column > 0 && floorCells[column - 1, row] == CellStatus.NoWall)
-					   || (column == (roomColumns + startingColumn) - 1 && column < numColumnsInFloor - 1 && floorCells[column + 1, row] == CellStatus.NoWall)
-					   || (row == startingRow && row > 0 && floorCells[column, row - 1] == CellStatus.NoWall)
-					   || (row == (roomRows + startingRow) - 1 && row < numRowsInFloor - 1 && floorCells[column, row + 1] == CellStatus.NoWall) )
+					if ( (column == startingColumn && column > 0 && floorCells[column - 1, row] == CellStatus.UnOccupied)
+					   || (column == (roomColumns + startingColumn) - 1 && column < numColumnsInFloor - 1 && floorCells[column + 1, row] == CellStatus.UnOccupied)
+					   || (row == startingRow && row > 0 && floorCells[column, row - 1] == CellStatus.UnOccupied)
+					   || (row == (roomRows + startingRow) - 1 && row < numRowsInFloor - 1 && floorCells[column, row + 1] == CellStatus.UnOccupied) )
 						Debug.Log( "Tile " + column + ", " + row + " did not get placed to maintain a wall on a side." );
-					else if ( floorCells[column, row] == CellStatus.HasWall )
-						floorCells[column, row] = CellStatus.NoWall;
+					else if ( floorCells[column, row] == CellStatus.Occupied )
+						floorCells[column, row] = CellStatus.UnOccupied;
 					else
 						Debug.LogError( "During room generation, we tried to remove wall: " + column + ", " + row + ".  It had already been removed." );
 				}
@@ -417,14 +417,14 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int row = 0; row < numRowsInFloor; row++ )
 			{
-				if ( floorCells[column, row] == CellStatus.HasWall )
+				if ( floorCells[column, row] == CellStatus.Occupied )
 				{
-					GameObject wall = GameObject.Instantiate( wallTestObject, new Vector3( column, .5f, row ), Quaternion.identity ) as GameObject;
+                    GameObject wall = GameObject.Instantiate(wallTestObject, new Vector3(column, .5f, row), Quaternion.Euler(Vector3.up * UnityEngine.Random.Range(0, 360))) as GameObject;
 					wall.transform.parent = wallsParent;
 				}
 				else
 				{
-					GameObject floor = GameObject.Instantiate( floorTestObject, new Vector3( column, 0f, row ), Quaternion.identity ) as GameObject;
+					GameObject floor = GameObject.Instantiate( floorTestObject, new Vector3( column, .01f, row ), Quaternion.identity ) as GameObject;
 					floor.transform.parent = floorsParent;
 				}
 			}
@@ -432,17 +432,17 @@ public class FloorGenerator : MonoBehaviour
 
 		for ( int column = -1; column <= numColumnsInFloor; column++ )
 		{
-			GameObject wall = GameObject.Instantiate( wallTestObject, new Vector3( column, .5f, -1 ), Quaternion.identity ) as GameObject;
+			GameObject wall = GameObject.Instantiate( wallTestObject, new Vector3( column, .5f, -1 ), Quaternion.Euler(Vector3.up * UnityEngine.Random.Range(0, 360)) ) as GameObject;
 			wall.transform.parent = wallsParent;
-			wall = GameObject.Instantiate( wallTestObject, new Vector3( column, .5f, numRowsInFloor ), Quaternion.identity ) as GameObject;
+            wall = GameObject.Instantiate(wallTestObject, new Vector3(column, .5f, numRowsInFloor), Quaternion.Euler(Vector3.up * UnityEngine.Random.Range(0, 360))) as GameObject;
 			wall.transform.parent = wallsParent;
 		}
 
 		for ( int row = -1; row <= numRowsInFloor; row++ )
 		{
-			GameObject wall = GameObject.Instantiate( wallTestObject, new Vector3( -1, .5f, row ), Quaternion.identity ) as GameObject;
+            GameObject wall = GameObject.Instantiate(wallTestObject, new Vector3(-1, .5f, row), Quaternion.Euler(Vector3.up * UnityEngine.Random.Range(0, 360))) as GameObject;
 			wall.transform.parent = wallsParent;
-			wall = GameObject.Instantiate( wallTestObject, new Vector3( numColumnsInFloor, .5f, row ), Quaternion.identity ) as GameObject;
+            wall = GameObject.Instantiate(wallTestObject, new Vector3(numColumnsInFloor, .5f, row), Quaternion.Euler(Vector3.up * UnityEngine.Random.Range(0, 360))) as GameObject;
 			wall.transform.parent = wallsParent; ;
 		}
 	}
@@ -564,7 +564,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			int column = path[i].column;
 			int row = path[i].row;
-			floorCells[column, row] = CellStatus.NoWall;
+			floorCells[column, row] = CellStatus.UnOccupied;
 		}
 
 		//FindPath( startingChunk, endingChunk );
@@ -828,7 +828,7 @@ public class FloorGenerator : MonoBehaviour
 
 		for (int i = 0; i < path.Count; i++)
 		{
-			floorCells[path[i].cell.column, path[i].cell.row] = CellStatus.NoWall;
+			floorCells[path[i].cell.column, path[i].cell.row] = CellStatus.UnOccupied;
 		}
 	}
 
