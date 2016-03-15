@@ -68,15 +68,15 @@ public abstract class MonoFSM : MonoBehaviour
 	/// Best Practice:
 	///		Declare the enum within the state machine
 	/// </summary>
-	protected Dictionary<int, State> states;
+	protected Dictionary<int, State> states = new Dictionary<int,State>();
 
 	[SerializeField, HideInInspector]
-	protected List<FSMTransition> validTransitions;
+	protected List<FSMTransition> validTransitions = new List<FSMTransition>();
 
 	/// <summary>
 	/// This represents what state the machine is currently in
 	/// </summary>
-	protected State currentState;
+	protected State currentState = null;
 
 	#endregion
 
@@ -87,10 +87,6 @@ public abstract class MonoFSM : MonoBehaviour
 	/// </summary>
 	protected virtual void Start()
 	{
-		validTransitions = new List<FSMTransition>();
-
-		currentState = null;
-
 		SetStates();
 
 		Initialize();

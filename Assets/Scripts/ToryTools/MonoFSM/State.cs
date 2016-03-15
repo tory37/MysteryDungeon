@@ -69,4 +69,9 @@ public abstract class State : MonoBehaviour
 	/// ** Nothing in Base. **
 	/// </summary>
     public virtual void CheckTransitions() { }
+
+	private void Awake()
+	{
+		this.enabled = false;
+	}
 }

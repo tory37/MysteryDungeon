@@ -71,7 +71,7 @@ public class LM_MoveParticipants : State
 			}
 
 			// Signify everyones been moved
-			fsm.ParticipantsToMove = new List<Participant>();
+			fsm.FinishedMovingParticipants();
 
 			fsm.AttemptTransition( LevelManager_States.DetermineNextParticipantTurn );
 		}

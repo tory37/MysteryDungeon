@@ -4,10 +4,10 @@ using System.Collections.Generic;
 
 public enum LevelManager_States
 {
-	DetermineNextParticipantTurn,
-	TakeParticipantAction,
-	MoveParticipants,
-	GetPlayerInput
+	DetermineNextParticipantTurn = 0,
+	TakeParticipantAction = 1,
+	MoveParticipants = 2,
+	GetPlayerInput = 3
 }
 
 public class LevelManager : MonoFSM
@@ -77,7 +77,7 @@ public class LevelManager : MonoFSM
 		}
 
 		Controllable controllable = participant as Controllable;
-		if (controllable != null && controllable.IsLeader == true)
+		if (controllable != null && controllable == GameManager.Instance.Leader)
 		{
 			if (controlledLeader == null)
 			{
@@ -156,11 +156,15 @@ public class LevelManager : MonoFSM
 		return p;
 	}
 
+	public void FinishedMovingParticipants()
+	{
+		participantsToMove = new List<Participant>();
+	}
+
 	#endregion
 
 	#region State Shared Variables
-
-	public List<Participant> ParticipantsToMove { get; set; }
+	public List<Participant> ParticipantsToMove { get { return participantsToMove; } }
 
 	#endregion
 
@@ -186,6 +190,11 @@ public class LevelManager : MonoFSM
 	/// </summary>
 	private List<Participant> floorParticipants;
 
+	/// <summary>
+	/// A list of participants that are waiting to be moved
+	/// </summary>
+	private List<Participant> participantsToMove;
+
 	private Queue<Participant> newParticipants;
 
 	private Queue<Participant> deadParticipants;
@@ -207,17 +216,20 @@ public class LevelManager : MonoFSM
 
 	protected override void Initialize()
 	{
+		// Initialize Lists
+		floorParticipants = new List<Participant>();
+		participantsToMove = new List<Participant>();
+
 		FloorGenerator floorGen = GetComponent<FloorGenerator>();
 
 		int numColumns = 0, numRows = 0;
-		floorCells = floorGen.GenerateFloor( ref numColumns, ref numRows );
+		floorCells = floorGen.GenerateFloor( ref numColumns, ref numRows);
 		NumColumns = numColumns;
-		NumRows = numRows;
+		NumRows = numRows;		
 
-		if (floorParticipants == null)
-			floorParticipants = new List<Participant>();
-	
 		currentParticipantIndex = 0;
+
+		RegisterNewParticipants();
 	}
 
 	#endregion

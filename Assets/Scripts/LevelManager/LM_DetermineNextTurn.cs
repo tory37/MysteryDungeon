@@ -30,7 +30,7 @@ public class LM_DetermineNextTurn : State
 		{
 			Participant currentParticipant = fsm.PeekCurrentParticipant();
 
-			if ( currentParticipant as Controllable != null && ((Controllable)currentParticipant).IsLeader)
+			if ( currentParticipant as Controllable != null && currentParticipant == GameManager.Instance.Leader)
 			{
 				nextState = LevelManager_States.GetPlayerInput;
 				return;

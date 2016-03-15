@@ -11,6 +11,8 @@ public class LM_GetPlayerInput : State
 
 	Controllable currentControllable;
 
+	private bool gotInput;
+
 	#endregion
 
 	#region State Overrides
@@ -41,19 +43,22 @@ public class LM_GetPlayerInput : State
 		float vertical = Input.GetAxis( "Vertical" );
 		float horizontal = Input.GetAxis( "Horizontal" );
 
-		if ( vertical > .5f || horizontal > .5f )
+		if ( vertical >= .5f || horizontal >= .5f  || vertical <= -.5f || horizontal <= -.5f)
 		{
+			Debug.Log( "Vertical: " + vertical + ", Horizontal: " + horizontal );
 			int newX = 0, newZ = 0;
 			if (currentControllable.CanMove(vertical, horizontal, ref newX, ref newZ))
 			{
 				currentControllable.SetNewPosition( new Cell( newX, newZ ) );
+				fsm.ParticipantsToMove.Add( currentControllable );
+				gotInput = true;
 			}
 		}
 	}
 
 	public override void CheckTransitions()
 	{
-		if (currentControllable == null)
+		if (gotInput == true)
 			fsm.AttemptTransition( LevelManager_States.DetermineNextParticipantTurn );
 	}
 

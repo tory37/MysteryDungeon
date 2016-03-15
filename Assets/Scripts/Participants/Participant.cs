@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public abstract class Participant : MonoFSM
+public abstract class Participant : MonoBehaviour
 {
 	public delegate void FinishedActionCallback();
 
@@ -56,10 +56,6 @@ public abstract class Participant : MonoFSM
 
 	#region FSM Overrides
 
-	private void Awake()
-	{
-		LevelManager.Instance.RegisterParticipant( this );
-	}
 
 	#endregion
 }

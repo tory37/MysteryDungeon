@@ -17,25 +17,20 @@ public abstract class Controllable : Participant
 		set;
 	}
 
-	/// <summary>
-	/// Keeps track of the current position of 
-	/// </summary>
-	private int X, Z;
-
-	public bool CanMove(float vertical, float horizontal, ref int newX, ref int newZ)
+	public bool CanMove(float vertical, float horizontal, ref int newColumn, ref int newRow)
 	{
-		newX = X; 
-		newZ = Z;
+		newColumn = Column;
+		newRow = Row;
 
 		if ( vertical > .5f )
-			newX = newX + 1;
+			newColumn = newColumn + 1;
 		else if ( vertical < -.5f )
-			newX = newX - 1;
+			newColumn = newColumn - 1;
 
 		if ( horizontal > .5f )
-			newX = newX + 1;
+			newColumn = newColumn + 1;
 		else if ( horizontal < -.5f )
-			newX = newX - 1;
+			newColumn = newColumn - 1;
 
 		return true;
 	}

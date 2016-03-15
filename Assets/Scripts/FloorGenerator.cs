@@ -159,9 +159,9 @@ public class FloorGenerator : MonoBehaviour
 	private Transform floorsParent;
 
 	[Header( "Other" )]
-	[Tooltip( "This represents how many times the a random starting point for a room is attempted to be found before incrementally looping through the spaces.  This is to avoid the possibility of 'never finding an open space.'" )]
+	[Tooltip( "This max number of times something random is attempted to be found, in cases that there's a possibility of not finding a solution.'" )]
 	[SerializeField]
-	private int findRoomStartTries;
+	private int maxRandomTries;
 
 	[SerializeField]
 	private GameObject wallTestObject;
@@ -176,6 +176,11 @@ public class FloorGenerator : MonoBehaviour
 
 	public CellStatus[,] GenerateFloor(ref int numColumns, ref int numRows)
 	{
+		totalNumChunks = numChunksX * numChunksZ;
+
+		numColumnsInChunk = Mathf.FloorToInt( numColumnsInFloor / numChunksX );
+		numRowsInChunk = Mathf.FloorToInt( numRowsInFloor / numChunksZ );
+
 		numColumns = numColumnsInFloor;
 		numRows = numRowsInFloor;
 
@@ -183,6 +188,7 @@ public class FloorGenerator : MonoBehaviour
 		GenerateRooms();
 		ConnectAllRooms();
 		DrawFloor();
+		PlacePlayerParty();
 
 		return floorCells;
 	}
@@ -204,18 +210,6 @@ public class FloorGenerator : MonoBehaviour
 	private Chunk[,] chunks;
 
 	private int partitionCount;
-
-	#endregion
-
-	#region Mono Methods
-
-	private void Start()
-	{
-		totalNumChunks = numChunksX * numChunksZ;
-
-		numColumnsInChunk = Mathf.FloorToInt( numColumnsInFloor / numChunksX );
-		numRowsInChunk = Mathf.FloorToInt( numRowsInFloor / numChunksZ );
-	}
 
 	#endregion
 
@@ -263,7 +257,7 @@ public class FloorGenerator : MonoBehaviour
 			int chunkColumn = UnityEngine.Random.Range( 0, numChunksX );
 			int chunkRow = UnityEngine.Random.Range( 0, numChunksZ );
 
-			for ( int i = 0; i < findRoomStartTries; i++ )
+			for ( int i = 0; i < maxRandomTries; i++ )
 			{
 				if ( chunks[chunkColumn, chunkRow].Status == ChunkStatus.Unoccupied )
 					break;
@@ -298,7 +292,7 @@ public class FloorGenerator : MonoBehaviour
 	private void ConnectAllRooms()
 	{
 		// Randomly select a chunk for a number of tries, and find a connection for it
-		for ( int i = 0; i < findRoomStartTries; i++ )
+		for ( int i = 0; i < maxRandomTries; i++ )
 		{
 			if ( CheckAllRoomsConnected() )
 				break;
@@ -928,6 +922,47 @@ public class FloorGenerator : MonoBehaviour
 			cell.row = firstChunk.randZ; //Mathf.FloorToInt( (firstChunk.Z * numRowsInChunk) + (.5f * numRowsInChunk) );
 		}
 	}
+
+	private void PlacePlayerParty()
+	{
+		// Find a random room
+		int col = 0, row = 0;
+
+		Chunk.Room startingRoom = null;
+
+		for ( int i = 0; i < maxRandomTries; i++ )
+		{
+			col = UnityEngine.Random.Range( 0, numChunksX - 1 );
+			row = UnityEngine.Random.Range( 0, numChunksZ - 1 );
+
+			startingRoom = chunks[col, row].MyRoom;
+
+			if ( startingRoom != null )
+				break;
+		}
+
+		if ( startingRoom != null )
+		{
+			for ( int c = 0; c < numChunksX; c++ )
+			{
+				for ( int r = 0; r < numChunksZ; r++ )
+				{
+					startingRoom = chunks[col, row].MyRoom;
+
+					if ( startingRoom != null )
+						break;
+				}
+				if ( startingRoom != null )
+					break;
+			}
+		}
+
+		// Place the party leader
+		GameManager.Instance.Leader.transform.position = new Vector3( startingRoom.startingColumn, .5f, startingRoom.startingRow );
+		GameManager.Instance.Leader.SetNewPosition( new Cell( startingRoom.startingColumn, startingRoom.startingRow ) );
+		LevelManager.Instance.RegisterParticipant( GameManager.Instance.Leader );
+	}
+
 
 	#endregion
 }

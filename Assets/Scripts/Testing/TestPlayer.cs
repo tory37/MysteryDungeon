@@ -18,11 +18,6 @@ public class TestPlayer : Controllable {
 	//	GetComponent<Rigidbody>().MovePosition( GetComponent<Rigidbody>().position + (transform.forward * vert) + (transform.right * hor) );
 	//}
 
-	protected override void Initialize()
-	{
-		IsLeader = true;
-	}
-
 	public override Participant.TurnType DetermineTurn()
 	{
 		return TurnType.Move;

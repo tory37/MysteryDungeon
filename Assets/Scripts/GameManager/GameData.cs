@@ -11,6 +11,7 @@ public class GameData : MonoBehaviour
 
 	// Characters
 	public Controllable Leader;
+	
 
 	#endregion
 
