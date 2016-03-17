@@ -43,7 +43,7 @@ public class LM_GetPlayerInput : State
 		float vertical = Input.GetAxis( "Vertical" );
 		float horizontal = Input.GetAxis( "Horizontal" );
 
-		if ( vertical >= .1f || horizontal >= .1f  || vertical <= -.1f || horizontal <= -.1f)
+		if ( vertical > 0 || horizontal > 0  || vertical < 0 || horizontal < 0)
 		{
 			int newX = 0, newZ = 0;
 			if (currentControllable.CanMove(vertical, horizontal, ref newX, ref newZ))

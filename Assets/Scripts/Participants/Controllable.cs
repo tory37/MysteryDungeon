@@ -25,14 +25,14 @@ public abstract class Controllable : Participant
         int newC = Column;
         int newR = Row;
 
-		if ( vertical > .5f )
+		if ( vertical > 0 )
             newR = newR + 1;
-		else if ( vertical < -.5f )
+		else if ( vertical < 0)
             newR = newR - 1;
 
-		if ( horizontal > .5f )
+		if ( horizontal > 0 )
             newC = newC + 1;
-		else if ( horizontal < -.5f )
+		else if ( horizontal < 0 )
             newC = newC - 1;
 
         if (LevelManager.Instance.FloorCells[newC, newR] == CellStatus.UnOccupied)

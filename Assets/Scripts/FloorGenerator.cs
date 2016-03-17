@@ -169,6 +169,8 @@ public class FloorGenerator : MonoBehaviour
 	private GameObject floorTestObject;
 	[SerializeField]
 	private GameObject ConnectorRenderer;
+	[SerializeField]
+	List<Participant> testParticipants;
 
 	#endregion
 
@@ -189,6 +191,7 @@ public class FloorGenerator : MonoBehaviour
 		ConnectAllRooms();
 		DrawFloor();
 		PlacePlayerParty();
+		PlaceEnemies();
 
 		return floorCells;
 	}
@@ -403,16 +406,6 @@ public class FloorGenerator : MonoBehaviour
 
 	private void DrawFloor()
 	{
-		// DEBUG: Display the partitions
-		for ( int x = 0; x < numChunksX; x++ )
-		{
-			for ( int z = 0; z < numChunksZ; z++ )
-			{
-				if ( chunks[x, z].MyRoom != null )
-					Debug.Log( "Chunk " + x + ", " + z + " in partition " + chunks[x, z].Partition );
-			}
-		}
-
 		for ( int column = 0; column < numColumnsInFloor; column++ )
 		{
 			for ( int row = 0; row < numRowsInFloor; row++ )
@@ -963,6 +956,48 @@ public class FloorGenerator : MonoBehaviour
 		LevelManager.Instance.RegisterParticipant( GameManager.Instance.Leader );
 	}
 
+	private void PlaceEnemies()
+	{
+		for (int j = 0; j < testParticipants.Count; j++)
+		{
+			// Find a random room
+			int col = 0, row = 0;
+
+			Chunk.Room startingRoom = null;
+
+			for ( int i = 0; i < maxRandomTries; i++ )
+			{
+				col = UnityEngine.Random.Range( 0, numChunksX - 1 );
+				row = UnityEngine.Random.Range( 0, numChunksZ - 1 );
+
+				startingRoom = chunks[col, row].MyRoom;
+
+				if ( startingRoom != null )
+					break;
+			}
+
+			if ( startingRoom != null )
+			{
+				for ( int c = 0; c < numChunksX; c++ )
+				{
+					for ( int r = 0; r < numChunksZ; r++ )
+					{
+						startingRoom = chunks[col, row].MyRoom;
+
+						if ( startingRoom != null )
+							break;
+					}
+					if ( startingRoom != null )
+						break;
+				}
+			}
+
+			// Place the party leader
+			testParticipants[j].transform.position = new Vector3( startingRoom.startingColumn, .5f, startingRoom.startingRow );
+			testParticipants[j].SetNewPosition( new Cell( startingRoom.startingColumn, startingRoom.startingRow ) );
+			LevelManager.Instance.RegisterParticipant( testParticipants[j] );
+		}
+	}
 
 	#endregion
 }

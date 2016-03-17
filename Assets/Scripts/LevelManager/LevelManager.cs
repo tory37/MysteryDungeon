@@ -109,18 +109,20 @@ public class LevelManager : MonoFSM
 		{
 			Participant participant = newParticipants.Dequeue();
 
-			int index = 0;
+			//int index = 0;
 
-			for ( int i = 0; i < floorParticipants.Count; i++ )
-			{
-				if ( participant.Speed > floorParticipants[i].Speed )
-				{
-					index = i;
-					break;
-				}
-			}
+			//for ( int i = 0; i < floorParticipants.Count; i++ )
+			//{
+			//	if ( participant.Speed > floorParticipants[i].Speed )
+			//	{
+			//		index = i;
+			//		break;
+			//	}
+			//}
 
-			floorParticipants.Insert( index, participant );
+			//floorParticipants.Insert( index, participant );
+
+			floorParticipants.Add( participant );
 		}
 	}
 

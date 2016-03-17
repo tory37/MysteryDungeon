@@ -39,6 +39,9 @@ public class LM_MoveParticipants : State
 
 	public override void OnEnter()
 	{
+		foreach ( Participant p in LevelManager.Instance.ParticipantsToMove )
+			Debug.Log( p.transform.position + ", " + p.Column + ", " + p.Row );
+
 		deltaMove = 0;
 
 		directions = new List<Vector3>();
