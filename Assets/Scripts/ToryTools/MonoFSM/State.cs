@@ -37,7 +37,7 @@ public abstract class State : MonoBehaviour
 	/// /// Gets called when the machine transitions into this state
 	/// ** Nothing in Base. **
 	/// </summary>
-    public virtual void OnEnter() { }
+	public virtual void OnEnter() { }
 
 	/// <summary>
 	/// Gets called every Unity Update

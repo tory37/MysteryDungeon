@@ -7,8 +7,6 @@ public class LM_MoveParticipants : State
 	#region Editor Interface
 
 	[SerializeField]
-	private float moveTime;
-	[SerializeField]
 	private float moveIntervals;
 
 	#endregion
@@ -35,7 +33,6 @@ public class LM_MoveParticipants : State
 		fsm = (LevelManager)callingfsm;
 
 		// TODO: Make this use a Game Manager
-		moveIntervalTime = moveTime / moveIntervals;
 		intervalFraction = 1 / moveIntervals;
 	}
 
@@ -53,6 +50,8 @@ public class LM_MoveParticipants : State
 			Participant p = fsm.ParticipantsToMove[i];
 			directions.Add( (new Vector3( p.Column, p.transform.position.y, p.Row ) - p.transform.position).normalized );
 		}
+
+		StartCoroutine( Move() );
 	}
 
 	//public override void OnUpdate()
@@ -80,15 +79,21 @@ public class LM_MoveParticipants : State
 
 	private IEnumerator Move()
 	{
-		for (int i = 0; i < moveIntervals; i++)
+		for (int i = 0; i < moveIntervals - 1; i++)
 		{
-			for (int par = 0; i < fsm.ParticipantsToMove.Count; par++)
+			for (int par = 0; par < fsm.ParticipantsToMove.Count; par++)
 			{
 				Participant p = fsm.ParticipantsToMove[par];
 				p.transform.Translate( directions[par] * intervalFraction );
 			}
 
-			yield return new WaitForSeconds( moveIntervalTime );
+			yield return new WaitForFixedUpdate();
+		}
+
+		for ( int par = 0; par < fsm.ParticipantsToMove.Count; par++ )
+		{
+			Participant p = fsm.ParticipantsToMove[par];
+			p.transform.position = new Vector3( p.Column, p.transform.position.y, p.Row );
 		}
 
 		done = true;

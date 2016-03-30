@@ -24,6 +24,8 @@ public class LM_GetPlayerInput : State
 
 	public override void OnEnter()
 	{
+		gotInput = false;
+
 		currentControllable = null;
 
 		Participant p = fsm.PeekCurrentParticipant();
@@ -33,6 +35,26 @@ public class LM_GetPlayerInput : State
 		}
 
 		currentControllable = (Controllable)p;
+
+		//if ( currentControllable == null )
+		//	return;
+
+		//float vertical = Input.GetAxis( "Vertical" );
+		//float horizontal = Input.GetAxis( "Horizontal" );
+
+		//if ( vertical > 0 || horizontal > 0 || vertical < 0 || horizontal < 0 )
+		//{
+		//	int newX = 0, newZ = 0;
+		//	if ( currentControllable.CanMove( vertical, horizontal, ref newX, ref newZ ) )
+		//	{
+		//		currentControllable.SetNewPosition( new Cell( newX, newZ ) );
+		//		fsm.ParticipantsToMove.Add( currentControllable );
+		//		gotInput = true;
+		//	}
+		//}
+
+		//if ( gotInput == true )
+		//	fsm.AttemptTransition( LevelManager_States.DetermineNextParticipantTurn );
 	}
 
 	public override void OnUpdate()
@@ -53,11 +75,14 @@ public class LM_GetPlayerInput : State
 				gotInput = true;
 			}
 		}
+
+		//if ( gotInput == true )
+		//	fsm.AttemptTransition( LevelManager_States.DetermineNextParticipantTurn );
 	}
 
 	public override void CheckTransitions()
 	{
-		if (gotInput == true)
+		if ( gotInput == true )
 			fsm.AttemptTransition( LevelManager_States.DetermineNextParticipantTurn );
 	}
 

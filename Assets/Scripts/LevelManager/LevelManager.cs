@@ -240,7 +240,7 @@ public class LevelManager : MonoFSM
 
 	private void IncrementCurrentParticipantIndex()
 	{
-		if ( currentParticipantIndex < floorParticipants.Count )
+		if ( currentParticipantIndex < floorParticipants.Count - 1 )
 			currentParticipantIndex++;
 		else
 			currentParticipantIndex = 0;

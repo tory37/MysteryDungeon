@@ -12,12 +12,16 @@ public class MonoFSMInspector : Editor {
 	{
 		MonoFSM fsm = (MonoFSM)target;
 
+		fsm.StateMachineIdentifier = EditorGUILayout.TextField( "State Machine Identifier", fsm.StateMachineIdentifier );
+
 		if ( fsm.LockEnumName )
 			EditorGUILayout.LabelField("State Enum Name: " + fsm.StateEnumName );
 		else
 			fsm.StateEnumName = EditorGUILayout.TextField( "State Enum Name", fsm.StateEnumName );
 
 		fsm.LockEnumName = EditorGUILayout.Toggle( "Lock Name", fsm.LockEnumName);
+
+		fsm.DebugMode = EditorGUILayout.Toggle( "Debug Mode", fsm.DebugMode );
 
 		Type enumType = Type.GetType( fsm.StateEnumName + ",Assembly-CSharp" );
 

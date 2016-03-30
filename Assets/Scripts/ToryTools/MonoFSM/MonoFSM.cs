@@ -15,11 +15,25 @@ public abstract class MonoFSM : MonoBehaviour
 
 	#region Editor Interface;
 
+
+	public string StateMachineIdentifier
+	{
+		get { return stateMachineIdentifier; }
+		#if UNITY_EDITOR
+		set { stateMachineIdentifier = value; }
+		#endif
+	}
+	[SerializeField, HideInInspector]
+	protected string stateMachineIdentifier;
+
 	[SerializeField, HideInInspector]
 	public string StateEnumName;
 
 	[SerializeField, HideInInspector]
 	public bool LockEnumName = false;
+
+	[SerializeField, HideInInspector]
+	public bool DebugMode = false;
 
 	[SerializeField, HideInInspector]
 	public bool IsStatesExpanded = false;
@@ -88,15 +102,24 @@ public abstract class MonoFSM : MonoBehaviour
 	protected virtual void Start()
 	{
 		SetStates();
+		if ( DebugMode )
+			Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + ": Setting States ( Time: " + Time.realtimeSinceStartup + ")" );
 
 		Initialize();
+		if ( DebugMode )
+			Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + ": Initialized Machine ( Time: " + Time.realtimeSinceStartup + ")" );
 
 		foreach ( State state in states.Values )
 		{
 			state.Initialize(this);
+			if ( DebugMode )
+				Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + ": Initialized State " + state.Identifier + "( Time: " + Time.realtimeSinceStartup + ")");
 		}
 
 		currentState = states.Values.ElementAt( 0 );
+
+		if (DebugMode) 
+			Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + "Entering State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")");
 		currentState.OnEnter();
 	}
 
@@ -161,9 +184,14 @@ public abstract class MonoFSM : MonoBehaviour
 	{
 		int toStateInt = Convert.ToInt32( toState );
 
+		if ( DebugMode )
+			Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + "Exiting State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")" );
 		currentState.OnExit();
+
 		if ( states.TryGetValue( toStateInt, out currentState ) )
 		{
+			if ( DebugMode )
+				Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + "Entering State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")" );
 			currentState.OnEnter();
 		}
 		else

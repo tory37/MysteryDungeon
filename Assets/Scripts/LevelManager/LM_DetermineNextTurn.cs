@@ -67,6 +67,11 @@ public class LM_DetermineNextTurn : State
 	private void FindAllToMove()
 	{
 		Participant currentParticipant = fsm.PeekCurrentParticipant();
+		if (currentParticipant == fsm.ControlledLeader)
+		{
+			fsm.ActOnCurrentParticipant();
+			currentParticipant = fsm.PeekCurrentParticipant();
+		}
 		while ( currentParticipant != fsm.ControlledLeader && currentParticipant.DetermineTurn() == Participant.TurnType.Move )
 		{
 			currentParticipant = fsm.ActOnCurrentParticipant();
