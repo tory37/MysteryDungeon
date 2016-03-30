@@ -30,6 +30,13 @@ public class TestPlayer : Controllable {
 
 	public override void TakeAction( Participant.FinishedActionCallback callback )
 	{
+		StartCoroutine( TestAction( callback ) );
+	}
+
+	private IEnumerator TestAction(Participant.FinishedActionCallback callback)
+	{
+		Anim.SetTrigger( "Attack" );
+		yield return new WaitForSeconds( 1.7f );
 		callback();
 	}
 }

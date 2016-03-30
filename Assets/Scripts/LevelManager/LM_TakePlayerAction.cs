@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+//TODO: Rename to TakeParticipantAction
 public class LM_TakePlayerAction : State
 {
 
@@ -22,6 +23,7 @@ public class LM_TakePlayerAction : State
 
 	public override void OnEnter()
 	{
+		actionFinished = false;
 		Participant participant = fsm.ActOnCurrentParticipant();
 		participant.TakeAction( FinishedAction );
 	}
