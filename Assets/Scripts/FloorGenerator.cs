@@ -951,8 +951,10 @@ public class FloorGenerator : MonoBehaviour
 		}
 
 		// Place the party leader
-		GameManager.Instance.Leader.transform.position = new Vector3( startingRoom.startingColumn, .5f, startingRoom.startingRow );
-		GameManager.Instance.Leader.SetNewPosition( new Cell( startingRoom.startingColumn, startingRoom.startingRow ) );
+		int newCol = UnityEngine.Random.Range( startingRoom.startingColumn, startingRoom.startingColumn + startingRoom.columns );
+		int newRow = UnityEngine.Random.Range( startingRoom.startingRow, startingRoom.startingRow + startingRoom.rows );
+		GameManager.Instance.Leader.transform.position = new Vector3( newCol, .5f, newRow );
+		GameManager.Instance.Leader.SetNewPosition( new Cell( newCol, newRow ) );
 		LevelManager.Instance.RegisterParticipant( GameManager.Instance.Leader );
 	}
 
@@ -992,9 +994,11 @@ public class FloorGenerator : MonoBehaviour
 				}
 			}
 
-			// Place the party leader
-			testParticipants[j].transform.position = new Vector3( startingRoom.startingColumn, .5f, startingRoom.startingRow );
-			testParticipants[j].SetNewPosition( new Cell( startingRoom.startingColumn, startingRoom.startingRow ) );
+			// Place the particpant
+			int newCol = UnityEngine.Random.Range( startingRoom.startingColumn, startingRoom.startingColumn + startingRoom.columns );
+			int newRow = UnityEngine.Random.Range( startingRoom.startingRow, startingRoom.startingRow + startingRoom.rows );
+			testParticipants[j].transform.position = new Vector3( newCol, .5f, newRow );
+			testParticipants[j].SetNewPosition( new Cell( newCol, newRow ) );
 			LevelManager.Instance.RegisterParticipant( testParticipants[j] );
 		}
 	}
