@@ -15,9 +15,13 @@ public abstract class Participant : MonoBehaviour
 
     [SerializeField] private int speed;
 
+	[SerializeField] private Animator anim;
+
     #endregion
 
     #region Public Interface
+
+	public Animator Anim { get { return anim; } }
 
 	// Stats
 	public int Speed { get { return speed; } }

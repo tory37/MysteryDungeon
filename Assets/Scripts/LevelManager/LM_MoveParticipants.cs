@@ -44,7 +44,9 @@ public class LM_MoveParticipants : State
 		{
 			Participant p = fsm.ParticipantsToMove[i];
 			Vector3 direction = new Vector3( p.Column, p.transform.position.y, p.Row ) - p.transform.position;
+			p.transform.forward = direction.normalized;
 			directions.Add( new Tuple<Vector3, float>(direction.normalized, direction.magnitude / moveIntervals));
+			p.Anim.SetBool( "Moving", true );
 		}
 
 		StartCoroutine( Move() );
@@ -60,16 +62,22 @@ public class LM_MoveParticipants : State
 	//	deltaMove += moveSpeed * Time.deltaTime;
 	//}
 
-	public override void CheckTransitions()
-	{
-		if (done)
-		{
-			// Signify everyones been moved
-			fsm.FinishedMovingParticipants();
+	//public override void CheckTransitions()
+	//{
+	//	if (done)
+	//	{
+	//		for ( int par = 0; par < fsm.ParticipantsToMove.Count; par++ )
+	//		{
+	//			Participant p = fsm.ParticipantsToMove[par];
+	//			p.Anim.SetBool( "Moving", false );
+	//		}
 
-			fsm.AttemptTransition( LevelManager_States.DetermineNextParticipantTurn );
-		}
-	}
+	//		// Signify everyones been moved
+	//		fsm.FinishedMovingParticipants();
+
+	//		fsm.AttemptTransition( LevelManager_States.DetermineNextParticipantTurn );
+	//	}
+	//}
 
 	#endregion
 
@@ -80,7 +88,7 @@ public class LM_MoveParticipants : State
 			for (int par = 0; par < fsm.ParticipantsToMove.Count; par++)
 			{
 				Participant p = fsm.ParticipantsToMove[par];
-				p.transform.Translate( directions[par].Item1 * directions[par].Item2 );
+				p.transform.position += ( directions[par].Item1 * directions[par].Item2 );
 			}
 
 			yield return new WaitForFixedUpdate();
@@ -92,6 +100,15 @@ public class LM_MoveParticipants : State
 			p.transform.position = new Vector3( p.Column, p.transform.position.y, p.Row );
 		}
 
-		done = true;
+		for ( int par = 0; par < fsm.ParticipantsToMove.Count; par++ )
+		{
+			Participant p = fsm.ParticipantsToMove[par];
+			p.Anim.SetBool( "Moving", false );
+		}
+
+		// Signify everyones been moved
+		fsm.FinishedMovingParticipants();
+
+		fsm.AttemptTransition( LevelManager_States.DetermineNextParticipantTurn );
 	}
 }
