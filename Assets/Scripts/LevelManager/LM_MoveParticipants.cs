@@ -17,10 +17,8 @@ public class LM_MoveParticipants : State
 
 	private float moveIntervalTime;
 
-	private float intervalFraction;
-
 	// A list of the directions each character needs to move
-	private List<Vector3> directions;
+	private List<Tuple<Vector3, float>> directions;
 
 	private bool done;
 
@@ -31,9 +29,6 @@ public class LM_MoveParticipants : State
 	public override void Initialize( MonoFSM callingfsm )
 	{
 		fsm = (LevelManager)callingfsm;
-
-		// TODO: Make this use a Game Manager
-		intervalFraction = 1 / moveIntervals;
 	}
 
 	public override void OnEnter()
@@ -43,12 +38,13 @@ public class LM_MoveParticipants : State
 		//foreach ( Participant p in LevelManager.Instance.ParticipantsToMove )
 		//	Debug.Log( p.transform.position + ", " + p.Column + ", " + p.Row );
 
-		directions = new List<Vector3>();
+		directions = new List<Tuple<Vector3, float>>();
 		// Set the directions, we assume the Column and Row of the participant has been set to the target location
 		for ( int i = 0; i < fsm.ParticipantsToMove.Count; i++ )
 		{
 			Participant p = fsm.ParticipantsToMove[i];
-			directions.Add( (new Vector3( p.Column, p.transform.position.y, p.Row ) - p.transform.position).normalized );
+			Vector3 direction = new Vector3( p.Column, p.transform.position.y, p.Row ) - p.transform.position;
+			directions.Add( new Tuple<Vector3, float>(direction.normalized, direction.magnitude / moveIntervals));
 		}
 
 		StartCoroutine( Move() );
@@ -84,7 +80,7 @@ public class LM_MoveParticipants : State
 			for (int par = 0; par < fsm.ParticipantsToMove.Count; par++)
 			{
 				Participant p = fsm.ParticipantsToMove[par];
-				p.transform.Translate( directions[par] * intervalFraction );
+				p.transform.Translate( directions[par].Item1 * directions[par].Item2 );
 			}
 
 			yield return new WaitForFixedUpdate();

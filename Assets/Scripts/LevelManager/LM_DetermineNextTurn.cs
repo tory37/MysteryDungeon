@@ -25,40 +25,45 @@ public class LM_DetermineNextTurn : State
 		if ( fsm.ParticipantsToMove.Count > 0 )
 		{
 			FindAllToMove();
+			nextState = LevelManager_States.MoveParticipants;
 		}
 		else
 		{
 			Participant currentParticipant = fsm.PeekCurrentParticipant();
 
-			if ( currentParticipant as Controllable != null && currentParticipant == GameManager.Instance.Leader)
+			if ( currentParticipant as Controllable != null && currentParticipant == GameManager.Instance.Leader )
 			{
 				nextState = LevelManager_States.GetPlayerInput;
-				return;
-			}
-
-			Participant.TurnType turnType = currentParticipant.DetermineTurn();
-
-			if ( turnType == Participant.TurnType.Action )
-			{
-				nextState = LevelManager_States.TakeParticipantAction;
-				return;
 			}
 			else
 			{
-				FindAllToMove();
+				Participant.TurnType turnType = currentParticipant.DetermineTurn();
+
+				if ( turnType == Participant.TurnType.Action )
+				{
+					nextState = LevelManager_States.TakeParticipantAction;
+				}
+				else
+				{
+					FindAllToMove();
+					nextState = LevelManager_States.MoveParticipants;
+				}
 			}
 		}
 
-		nextState = LevelManager_States.MoveParticipants;
-	}
-
-	public override void CheckTransitions()
-	{
 		if ( nextState == LevelManager_States.DetermineNextParticipantTurn )
 			Debug.LogError( "Examine Next Participant did not switch states correctly." );
 		else
 			fsm.AttemptTransition( nextState );
 	}
+
+	//public override void CheckTransitions()
+	//{
+	//	if ( nextState == LevelManager_States.DetermineNextParticipantTurn )
+	//		Debug.LogError( "Examine Next Participant did not switch states correctly." );
+	//	else
+	//		fsm.AttemptTransition( nextState );
+	//}
 
 	#endregion
 

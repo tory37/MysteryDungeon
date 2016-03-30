@@ -119,7 +119,7 @@ public abstract class MonoFSM : MonoBehaviour
 		currentState = states.Values.ElementAt( 0 );
 
 		if (DebugMode) 
-			Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + "Entering State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")");
+			Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + ": Entering State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")");
 		currentState.OnEnter();
 	}
 
@@ -185,13 +185,13 @@ public abstract class MonoFSM : MonoBehaviour
 		int toStateInt = Convert.ToInt32( toState );
 
 		if ( DebugMode )
-			Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + "Exiting State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")" );
+			Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + ": Exiting State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")" );
 		currentState.OnExit();
 
 		if ( states.TryGetValue( toStateInt, out currentState ) )
 		{
 			if ( DebugMode )
-				Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + "Entering State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")" );
+				Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + ": Entering State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")" );
 			currentState.OnEnter();
 		}
 		else
@@ -259,8 +259,8 @@ public class FSMTransition : IEquatable<FSMTransition>
 
 	public FSMTransition(int from, int to)
 	{
-		this.From = from;
-		this.To = to;
+		this.from = from;
+		this.to = to;
 	}
 
 	public bool Equals( FSMTransition other )
