@@ -35,7 +35,7 @@ public abstract class Controllable : Participant
 		else if ( horizontal < 0 )
             newC = newC - 1;
 
-        if (LevelManager.Instance.FloorCells[newC, newR] == CellStatus.UnOccupied)
+        if (LevelManager.Instance.FloorCells[newC, newR].Status == CellStatus.Open)
         {
             newColumn = newC;
             newRow = newR;

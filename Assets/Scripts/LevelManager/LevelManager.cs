@@ -40,12 +40,13 @@ public class LevelManager : MonoFSM
 		}
 	}
 
-	public int NumColumns { get; private set; }
-	public int NumRows { get; private set; }
-	public CellStatus[,] FloorCells { get { return floorCells; } }
+	public int FloorColumns { get; private set; }
+	public int FloorRows { get; private set; }
+	public Cell[,] FloorCells { get { return floorCells; } }
 	public int CurrentParticipantIndex { get { return currentParticipantIndex; } }
 	public Controllable ControlledLeader { get { return controlledLeader; } }
 	public List<Participant> FloorParticipants { get { return floorParticipants; } }
+	public Node[,] FloorNodes { get; private set; }
 
 	public void ChangeLeader(Controllable controllable)
 	{
@@ -180,7 +181,7 @@ public class LevelManager : MonoFSM
 	/// <summary>
 	/// The 2D Array representation of the floor
 	/// </summary>
-	private CellStatus[,] floorCells;
+	private Cell[,] floorCells;
 
 	/// <summary>
 	/// The current leader, the main controllable
@@ -226,10 +227,19 @@ public class LevelManager : MonoFSM
 
 		int numColumns = 0, numRows = 0;
 		floorCells = floorGen.GenerateFloor( ref numColumns, ref numRows);
-		NumColumns = numColumns;
-		NumRows = numRows;		
+		FloorColumns = numColumns;
+		FloorRows = numRows;
 
-		currentParticipantIndex = 0;
+		FloorNodes = new Node[FloorColumns, FloorRows];
+		for ( int i = 0; i < FloorColumns; i++)
+		{
+			for (int j = 0; j < numRows; j++)
+			{
+				FloorNodes[i, j] = new Node( floorCells[i, j], null, 0, 0 );
+			}
+		}
+
+			currentParticipantIndex = 0;
 
 		RegisterNewParticipants();
 	}

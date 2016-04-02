@@ -46,7 +46,8 @@ public class LM_MoveParticipants : State
 			Vector3 direction = new Vector3( p.Column, p.transform.position.y, p.Row ) - p.transform.position;
 			p.transform.forward = direction.normalized;
 			directions.Add( new Tuple<Vector3, float>(direction.normalized, direction.magnitude / moveIntervals));
-			p.Anim.SetBool( "Moving", true );
+			if (p.Anim != null)
+				p.Anim.SetBool( "Moving", true );
 		}
 
 		StartCoroutine( Move() );
@@ -103,7 +104,8 @@ public class LM_MoveParticipants : State
 		for ( int par = 0; par < fsm.ParticipantsToMove.Count; par++ )
 		{
 			Participant p = fsm.ParticipantsToMove[par];
-			p.Anim.SetBool( "Moving", false );
+			if (p.Anim != null)
+				p.Anim.SetBool( "Moving", false );
 		}
 
 		// Signify everyones been moved

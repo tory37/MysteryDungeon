@@ -45,7 +45,6 @@ public class GameManager : MonoBehaviour
 
 	#endregion
 
-
 	#region Mono Methods
 
 	private void Awake()
@@ -57,5 +56,4 @@ public class GameManager : MonoBehaviour
 	}
 
 	#endregion
-
 }

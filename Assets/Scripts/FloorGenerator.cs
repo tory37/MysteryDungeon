@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using System;
 
 public enum ChunkStatus { Occupied, Unoccupied };
-public enum CellStatus { Occupied, UnOccupied };
+public enum CellStatus { Occupied, Open };
 
 public class Cell
 {
 	public int column, row;
+	public CellStatus Status = CellStatus.Open;
 
 	public Cell()
 	{
@@ -176,7 +177,7 @@ public class FloorGenerator : MonoBehaviour
 
 	#region Public Interface
 
-	public CellStatus[,] GenerateFloor(ref int numColumns, ref int numRows)
+	public Cell[,] GenerateFloor(ref int numColumns, ref int numRows)
 	{
 		totalNumChunks = numChunksX * numChunksZ;
 
@@ -203,7 +204,7 @@ public class FloorGenerator : MonoBehaviour
 	/// <summary>
 	/// Represents the tiles in the floor
 	/// </summary>
-	private CellStatus[,] floorCells;
+	private Cell[,] floorCells;
 
 	private int totalNumChunks;
 
@@ -220,9 +221,17 @@ public class FloorGenerator : MonoBehaviour
 
 	private void ResetFloor()
 	{
-		floorCells = new CellStatus[numColumnsInFloor, numRowsInFloor];
+		floorCells = new Cell[numColumnsInFloor, numRowsInFloor];
 
-		chunks = new Chunk[numChunksX, numChunksZ];
+		for ( int i  = 0; i < numColumnsInFloor; i++ )
+		{
+			for (int j = 0; j < numRowsInFloor; j++)
+			{
+				floorCells[i, j] = new Cell( i, j );
+			}
+		}
+
+			chunks = new Chunk[numChunksX, numChunksZ];
 
 		partitionCount = 0;
 
@@ -245,7 +254,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int width = 0; width < numRowsInFloor; width++ )
 			{
-				floorCells[column, width] = CellStatus.Occupied;
+				floorCells[column, width].Status = CellStatus.Occupied;
 			}
 		}
 	}
@@ -385,13 +394,13 @@ public class FloorGenerator : MonoBehaviour
 			{
 				try
 				{
-					if ( (column == startingColumn && column > 0 && floorCells[column - 1, row] == CellStatus.UnOccupied)
-					   || (column == (roomColumns + startingColumn) - 1 && column < numColumnsInFloor - 1 && floorCells[column + 1, row] == CellStatus.UnOccupied)
-					   || (row == startingRow && row > 0 && floorCells[column, row - 1] == CellStatus.UnOccupied)
-					   || (row == (roomRows + startingRow) - 1 && row < numRowsInFloor - 1 && floorCells[column, row + 1] == CellStatus.UnOccupied) )
+					if ( (column == startingColumn && column > 0 && floorCells[column - 1, row].Status == CellStatus.Open)
+					   || (column == (roomColumns + startingColumn) - 1 && column < numColumnsInFloor - 1 && floorCells[column + 1, row].Status == CellStatus.Open)
+					   || (row == startingRow && row > 0 && floorCells[column, row - 1].Status == CellStatus.Open)
+					   || (row == (roomRows + startingRow) - 1 && row < numRowsInFloor - 1 && floorCells[column, row + 1].Status == CellStatus.Open) )
 						Debug.Log( "Tile " + column + ", " + row + " did not get placed to maintain a wall on a side." );
-					else if ( floorCells[column, row] == CellStatus.Occupied )
-						floorCells[column, row] = CellStatus.UnOccupied;
+					else if ( floorCells[column, row].Status == CellStatus.Occupied )
+						floorCells[column, row].Status = CellStatus.Open;
 					else
 						Debug.LogError( "During room generation, we tried to remove wall: " + column + ", " + row + ".  It had already been removed." );
 				}
@@ -410,7 +419,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int row = 0; row < numRowsInFloor; row++ )
 			{
-				if ( floorCells[column, row] == CellStatus.Occupied )
+				if ( floorCells[column, row].Status == CellStatus.Occupied )
 				{
                     GameObject wall = GameObject.Instantiate(wallTestObject, new Vector3(column, .5f, row), Quaternion.Euler(Vector3.up * UnityEngine.Random.Range(0, 360))) as GameObject;
 					wall.transform.parent = wallsParent;
@@ -557,7 +566,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			int column = path[i].column;
 			int row = path[i].row;
-			floorCells[column, row] = CellStatus.UnOccupied;
+			floorCells[column, row].Status = CellStatus.Open;
 		}
 
 		//FindPath( startingChunk, endingChunk );
@@ -821,7 +830,7 @@ public class FloorGenerator : MonoBehaviour
 
 		for (int i = 0; i < path.Count; i++)
 		{
-			floorCells[path[i].cell.column, path[i].cell.row] = CellStatus.UnOccupied;
+			floorCells[path[i].cell.column, path[i].cell.row].Status = CellStatus.Open;
 		}
 	}
 

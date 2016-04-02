@@ -103,23 +103,36 @@ public abstract class MonoFSM : MonoBehaviour
 	{
 		SetStates();
 		if ( DebugMode )
+		{
 			Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + ": Setting States ( Time: " + Time.realtimeSinceStartup + ")" );
+			System.Diagnostics.Debug.WriteLine( "FSM DEBUG -> " + stateMachineIdentifier + ": Setting States ( Time: " + Time.realtimeSinceStartup + ")" );
+		}
 
 		Initialize();
 		if ( DebugMode )
+		{
 			Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + ": Initialized Machine ( Time: " + Time.realtimeSinceStartup + ")" );
+			System.Diagnostics.Debug.WriteLine( "FSM DEBUG -> " + stateMachineIdentifier + ": Initialized Machine ( Time: " + Time.realtimeSinceStartup + ")" );
+		}
+			
 
 		foreach ( State state in states.Values )
 		{
 			state.Initialize(this);
 			if ( DebugMode )
+			{
 				Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + ": Initialized State " + state.Identifier + "( Time: " + Time.realtimeSinceStartup + ")");
+				System.Diagnostics.Debug.WriteLine("FSM DEBUG -> " + stateMachineIdentifier + ": Initialized State " + state.Identifier + "( Time: " + Time.realtimeSinceStartup + ")");
+			}
 		}
 
 		currentState = states.Values.ElementAt( 0 );
 
 		if (DebugMode) 
+		{
 			Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + ": Entering State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")");
+			System.Diagnostics.Debug.WriteLine("FSM DEBUG -> " + stateMachineIdentifier + ": Entering State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")");
+		}
 		currentState.OnEnter();
 	}
 
@@ -185,13 +198,19 @@ public abstract class MonoFSM : MonoBehaviour
 		int toStateInt = Convert.ToInt32( toState );
 
 		if ( DebugMode )
+		{
 			Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + ": Exiting State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")" );
+			System.Diagnostics.Debug.WriteLine( "FSM DEBUG -> " + stateMachineIdentifier + ": Exiting State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")" );
+		}
 		currentState.OnExit();
 
 		if ( states.TryGetValue( toStateInt, out currentState ) )
 		{
 			if ( DebugMode )
+			{
 				Debug.Log( "FSM DEBUG -> " + stateMachineIdentifier + ": Entering State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")" );
+				System.Diagnostics.Debug.WriteLine("FSM DEBUG -> " + stateMachineIdentifier + ": Entering State - " + currentState.Identifier + "( Time: " + Time.realtimeSinceStartup + ")" );
+			}
 			currentState.OnEnter();
 		}
 		else
