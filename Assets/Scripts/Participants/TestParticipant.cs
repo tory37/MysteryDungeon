@@ -5,11 +5,28 @@ public class TestParticipant : Participant {
 
 	public override TurnType DetermineTurn()
 	{
-		return TurnType.Move;
+		if ( (LevelManager.Instance.ControlledLeader.transform.position - transform.position).magnitude < 10 )
+			return TurnType.Action;
+		else
+			return TurnType.Move;
 	}
 
 	public override void TakeAction( FinishedActionCallback callback )
 	{
+		StartCoroutine( TestAction(callback) );
+	}
+
+	private IEnumerator TestAction(FinishedActionCallback callback)
+	{
+		Debug.Log( "Taking Action" );
+		int counter = 0;
+		while (counter < 45)
+		{
+			transform.Rotate( Vector3.up * 2 );
+			counter += 1;
+			yield return new WaitForEndOfFrame();
+		}
+
 		callback();
 	}
 
