@@ -179,6 +179,8 @@ public class FloorGenerator : MonoBehaviour
 
 	public Cell[,] GenerateFloor(ref int numColumns, ref int numRows)
 	{
+		UnityEngine.Random.seed = 19965;
+
 		totalNumChunks = numChunksX * numChunksZ;
 
 		numColumnsInChunk = Mathf.FloorToInt( numColumnsInFloor / numChunksX );

@@ -36,15 +36,20 @@ public class Paths {
 	// returns the next node this participant should move to
 	public static bool FindNextNode(Node start, Node end, out Node nextNode)
 	{
+		nextNode = null;
 		if (FindAStarPath(start, end))
 		{
 			Node current  = end;
-			while ( current.Parent != start )
+			//int counter  = 0;
+			while ( current.Parent.Cell != start.Cell )
+			{
+				//if ( counter > 100 )
+				//	return false;
 				current = current.Parent;
+			}
 			nextNode = current;
 			return true;
 		}
-		nextNode = null;
 		return false;
 	}
 
@@ -61,7 +66,7 @@ public class Paths {
 
 		// Do this until you add the end node to closed list or openList is empty
 		//	which means there is no path
-		while ( openList.Count > 0 )
+		while ( openList.Count > 0  )
 		{
 			// Look for the lowest F cost square on the open list. We refer to this as the current square.
 			currentNode = openList[0];
