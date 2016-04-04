@@ -29,6 +29,8 @@ public abstract class Participant : MonoBehaviour
 	// Position
 	public int Column { get; private set; }
 	public int Row { get; private set; }
+	public int OldColumn { get; private set; }
+	public int OldRow { get; private set; }
 
 	/// <summary>
 	/// Whether or not this participant is in the scene.
@@ -52,6 +54,8 @@ public abstract class Participant : MonoBehaviour
 	/// <param name="newCell"></param>
 	public void SetNewPosition(Cell newCell)
 	{
+		this.OldColumn = this.Column;
+		this.OldRow = this.Row;
 		this.Column = newCell.column;
 		this.Row = newCell.row;
 	}

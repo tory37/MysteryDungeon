@@ -50,11 +50,46 @@ public class LevelManager : MonoFSM
 
 	public void ChangeLeader(Controllable controllable)
 	{
-		// Get references to old and new leader
-		Controllable oldLeader = controlledLeader;
-		Controllable newLeader = controllable;
+		if ( controlledLeader == null )
+			controlledLeader = controllable;
+		else
+		{
+			// Get references to old and new leader
+			Controllable oldLeader = controlledLeader;
+			Controllable newLeader = controllable;
 
-		// Get their indexes in the list
+			// Get their indexes in the list
+			int oldLeaderindex = floorParticipants.IndexOf( oldLeader );
+			int newLeaderIndex = floorParticipants.IndexOf( newLeader );
+
+			// Switch their order in the list
+			floorParticipants[oldLeaderindex] = newLeader;
+			floorParticipants[newLeaderIndex] = oldLeader;
+
+			// Set the new leader
+			controlledLeader = controllable;
+		}
+	}
+
+	public void ChangeLeaderLeft()
+	{
+		Controllable oldLeader = controlledLeader;
+		Controllable newLeader = null;
+
+		Participant currentP = oldLeader;
+		
+
+		while (newLeader == null)
+		{
+			if ( floorParticipants.IndexOf( currentP ) > 0 )
+				currentP = floorParticipants[floorParticipants.IndexOf( currentP ) - 1];
+			else
+				currentP = floorParticipants[floorParticipants.Count - 1];
+
+			if ( currentP is Controllable )
+				newLeader = currentP as Controllable;
+		}
+
 		int oldLeaderindex = floorParticipants.IndexOf( oldLeader );
 		int newLeaderIndex = floorParticipants.IndexOf( newLeader );
 
@@ -62,8 +97,36 @@ public class LevelManager : MonoFSM
 		floorParticipants[oldLeaderindex] = newLeader;
 		floorParticipants[newLeaderIndex] = oldLeader;
 
-		// Set the new leader
-		controlledLeader = controllable;
+		controlledLeader = newLeader;
+	}
+
+	public void ChangeLeaderRight()
+	{
+		Controllable oldLeader = controlledLeader;
+		Controllable newLeader = null;
+
+		Participant currentP = oldLeader;
+
+
+		while ( newLeader == null )
+		{
+			if ( floorParticipants.IndexOf( currentP ) < floorParticipants.Count - 1 )
+				currentP = floorParticipants[floorParticipants.IndexOf( currentP ) + 1];
+			else
+				currentP = floorParticipants[0];
+
+			if ( currentP is Controllable )
+				newLeader = currentP as Controllable;
+		}
+
+		int oldLeaderindex = floorParticipants.IndexOf( oldLeader );
+		int newLeaderIndex = floorParticipants.IndexOf( newLeader );
+
+		// Switch their order in the list
+		floorParticipants[oldLeaderindex] = newLeader;
+		floorParticipants[newLeaderIndex] = oldLeader;
+
+		controlledLeader = newLeader;
 	}
 
 	/// <summary>

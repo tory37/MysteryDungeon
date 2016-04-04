@@ -172,6 +172,8 @@ public class FloorGenerator : MonoBehaviour
 	private GameObject ConnectorRenderer;
 	[SerializeField]
 	List<Participant> testParticipants;
+	[SerializeField]
+	List<Controllable> playerParty;
 
 	#endregion
 
@@ -964,9 +966,24 @@ public class FloorGenerator : MonoBehaviour
 		// Place the party leader
 		int newCol = UnityEngine.Random.Range( startingRoom.startingColumn, startingRoom.startingColumn + startingRoom.columns );
 		int newRow = UnityEngine.Random.Range( startingRoom.startingRow, startingRoom.startingRow + startingRoom.rows );
-		GameManager.Instance.Leader.transform.position = new Vector3( newCol, .5f, newRow );
-		GameManager.Instance.Leader.SetNewPosition( new Cell( newCol, newRow ) );
-		LevelManager.Instance.RegisterParticipant( GameManager.Instance.Leader );
+		Controllable current = GameObject.Instantiate(playerParty[0], new Vector3( newCol, .5f, newRow ), Quaternion.identity) as Controllable;
+		current.SetNewPosition( new Cell( newCol, newRow ) );
+		LevelManager.Instance.RegisterParticipant( current );
+		LevelManager.Instance.ChangeLeader( current);
+
+		for (int i = 1; i < playerParty.Count; i++)
+		{
+			//TODO: Make it go through each one and place it around the first player
+			if ( floorCells[LevelManager.Instance.ControlledLeader.Column - 1, newRow].Status == CellStatus.Open )
+				newCol = LevelManager.Instance.ControlledLeader.Column - 1;
+			else
+				newCol = LevelManager.Instance.ControlledLeader.Column + 1;
+			current = GameObject.Instantiate( playerParty[i], new Vector3( newCol, .5f, newRow ), Quaternion.identity ) as Controllable;
+			current.SetNewPosition( new Cell( newCol, newRow ) );
+			LevelManager.Instance.RegisterParticipant( current );
+		}
+
+		//for (int i = 0; i < )
 	}
 
 	private void PlaceEnemies()

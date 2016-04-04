@@ -44,8 +44,8 @@ public class LM_GetPlayerInput : State
 		if ( currentControllable == null )
 			return;
 
-		float vertical = Input.GetAxis( "Vertical" );
-		float horizontal = Input.GetAxis( "Horizontal" );
+		float vertical = Input.GetAxisRaw( "Vertical" );
+		float horizontal = Input.GetAxisRaw( "Horizontal" );
 
 		if ( vertical > 0 || horizontal > 0  || vertical < 0 || horizontal < 0)
 		{
@@ -63,6 +63,16 @@ public class LM_GetPlayerInput : State
 		{
 			gotInput = true;
 			nextState = LevelManager_States.TakeParticipantAction;
+			return;
+		}
+		if ( Input.GetButtonDown( "RB" ) )
+		{
+			LevelManager.Instance.ChangeLeaderRight();
+			return;
+		}
+		if ( Input.GetButtonDown( "LB" ) )
+		{
+			LevelManager.Instance.ChangeLeaderLeft();
 			return;
 		}
 

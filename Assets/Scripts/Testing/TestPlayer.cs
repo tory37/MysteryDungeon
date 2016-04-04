@@ -25,7 +25,19 @@ public class TestPlayer : Controllable {
 
 	public override Cell FindNewCell()
 	{
-		return new Cell( 1, 1 );
+		Controllable leader = LevelManager.Instance.ControlledLeader;
+		if ( (Mathf.Abs( leader.Column - Column ) == 1 && leader.Row == Row) || (Mathf.Abs( leader.Row - Row ) == 1 && leader.Column == Column) || (Mathf.Abs( leader.Column - Column ) == 1 && Mathf.Abs( leader.Row - Row ) == 1) )
+			return new Cell( Column, Row );
+		else if ( leader.Column == Column && leader.Row == Row )
+			return new Cell( leader.OldColumn, leader.OldRow );
+		else
+		{
+			Node newNode = null;
+			if ( Paths.FindNextNode( LevelManager.Instance.FloorNodes[Column, Row], LevelManager.Instance.FloorNodes[LevelManager.Instance.ControlledLeader.Column, LevelManager.Instance.ControlledLeader.Row], out newNode ) )
+				return newNode.Cell;
+			else
+				return new Cell( Column, Row );
+		}
 	}
 
 	public override void TakeAction( Participant.FinishedActionCallback callback )
