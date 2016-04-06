@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.Collections.ObjectModel;
 
 public class Node :IComparable
 {
@@ -38,12 +39,22 @@ public class Node :IComparable
 
 public class Paths {
 
+	public static readonly IList<CellOccupancy> cornerPassableOccupancies = new ReadOnlyCollection<CellOccupancy>(
+		new List<CellOccupancy>
+		{
+			CellOccupancy.Player,
+			CellOccupancy.Enemy,
+			CellOccupancy.Open,
+			CellOccupancy.Passable
+		});
+
 	// Uses the astar path finding to modify the level nodes, then
 	// returns the next node this participant should move to
 	public static bool FindNextNode(Node start, Node end, out Node nextNode)
 	{
 		nextNode = null;
-		if (FindAStarPath(start, end))
+		List<Node> closedList;
+		if (FindAStarPath(start, end, out closedList))
 		{
 			Node current  = end;
 			//int counter  = 0;
@@ -56,16 +67,23 @@ public class Paths {
 			nextNode = current;
 			return true;
 		}
+		else if (closedList.Count >= 2)
+		{
+			nextNode = closedList[1];
+			return true;
+		}
 		return false;
 	}
 
 	// This modifies the nodes in the level manager, so the path can be traced backwards
-	public static  bool FindAStarPath( Node start, Node end )
+	public static  bool FindAStarPath( Node start, Node end, out List<Node> closedList )
 	{
+		Node[,] floorNodes = LevelManager.Instance.FloorNodes;
+
 		start.Set( null, 0, FindH( start, end ) );
 
 		List<Node> openList = new List<Node>();
-		List<Node> closedList = new List<Node>();
+		closedList = new List<Node>();
 
 		// Add the starting square (or node) to the open list.
 		Node currentNode = start;
@@ -98,7 +116,26 @@ public class Paths {
 
 			for ( int i = 0; i < newNodes.Count; i++ )
 			{
-				if ( newNodes[i].Cell.Status != CellStatus.Open || closedList.Contains( newNodes[i] ) )
+				bool condition = ((newNodes[i].Cell.Status != CellOccupancy.Open) || closedList.Contains( newNodes[i] )) && newNodes[i] != end;
+
+				if ( newNodes[i].Cell.column == currentNode.Cell.column + 1 && newNodes[i].Cell.row == currentNode.Cell.row + 1 &&
+					(!cornerPassableOccupancies.Contains(floorNodes[currentNode.Cell.column + 1, currentNode.Cell.row].Cell.Status) ||
+					!cornerPassableOccupancies.Contains(floorNodes[currentNode.Cell.column, currentNode.Cell.row + 1].Cell.Status) ))
+						condition = true;
+				if ( newNodes[i].Cell.column == currentNode.Cell.column - 1 && newNodes[i].Cell.row == currentNode.Cell.row + 1 &&
+					(!cornerPassableOccupancies.Contains(floorNodes[currentNode.Cell.column - 1, currentNode.Cell.row].Cell.Status) ||
+					!cornerPassableOccupancies.Contains(floorNodes[currentNode.Cell.column, currentNode.Cell.row + 1].Cell.Status) ))
+						condition = true;
+				if ( newNodes[i].Cell.column == currentNode.Cell.column - 1 && newNodes[i].Cell.row == currentNode.Cell.row - 1 &&
+					(!cornerPassableOccupancies.Contains( floorNodes[currentNode.Cell.column - 1, currentNode.Cell.row].Cell.Status) ||
+					!cornerPassableOccupancies.Contains(floorNodes[currentNode.Cell.column, currentNode.Cell.row - 1].Cell.Status) ))
+						condition = true;
+				if ( newNodes[i].Cell.column == currentNode.Cell.column + 1 && newNodes[i].Cell.row == currentNode.Cell.row - 1 &&
+					(!cornerPassableOccupancies.Contains( floorNodes[currentNode.Cell.column + 1, currentNode.Cell.row].Cell.Status) ||
+					!cornerPassableOccupancies.Contains( floorNodes[currentNode.Cell.column, currentNode.Cell.row - 1].Cell.Status)) )
+						condition = true;
+
+				if ( condition )
 				{
 					newNodes.Remove( newNodes[i] );
 					i--;

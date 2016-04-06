@@ -42,13 +42,13 @@ public class TestParticipant : Participant {
 
 			int minCol = 0, maxCol= 0, minRow = 0, maxRow = 0;
 
-			if ( lm.FloorColumns > Column + 1  && lm.FloorCells[Column + 1, Row].Status == CellStatus.Open)
+			if ( lm.FloorColumns > Column + 1  && lm.FloorCells[Column + 1, Row].Status == CellOccupancy.Open)
 				maxCol = 1;
-			if ( Column - 1 >= 0 && lm.FloorCells[Column - 1, Row].Status == CellStatus.Open )
+			if ( Column - 1 >= 0 && lm.FloorCells[Column - 1, Row].Status == CellOccupancy.Open )
 				minCol = -1;
-			if ( lm.FloorRows > Row + 1 && lm.FloorCells[Column, Row + 1].Status == CellStatus.Open )
+			if ( lm.FloorRows > Row + 1 && lm.FloorCells[Column, Row + 1].Status == CellOccupancy.Open )
 				maxRow = 1;
-			if ( Row - 1 >= 0 && lm.FloorCells[Column, Row - 1].Status == CellStatus.Open )
+			if ( Row - 1 >= 0 && lm.FloorCells[Column, Row - 1].Status == CellOccupancy.Open )
 				minRow = -1;
 
 			int newCol = Column + Random.Range(minCol, maxCol);

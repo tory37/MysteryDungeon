@@ -9,8 +9,6 @@ public class LM_GetPlayerInput : State
 
 	LevelManager fsm;
 
-	Controllable currentControllable;
-
 	private bool gotInput;
 
 	private LevelManager_States nextState;
@@ -28,35 +26,32 @@ public class LM_GetPlayerInput : State
 	{
 		gotInput = false;
 
-		currentControllable = null;
-
 		Participant p = fsm.PeekCurrentParticipant();
 		if ( p != fsm.ControlledLeader )
 		{
 			return;
 		}
-
-		currentControllable = (Controllable)p;
 	}
 
 	public override void OnUpdate()
 	{
-		if ( currentControllable == null )
-			return;
-
 		float vertical = Input.GetAxisRaw( "Vertical" );
 		float horizontal = Input.GetAxisRaw( "Horizontal" );
 
 		if ( vertical > 0 || horizontal > 0  || vertical < 0 || horizontal < 0)
 		{
 			int newX = 0, newZ = 0;
-			if (currentControllable.CanMove(vertical, horizontal, ref newX, ref newZ))
+			if (fsm.ControlledLeader.CanMove(vertical, horizontal, ref newX, ref newZ))
 			{
-				currentControllable.SetNewPosition( new Cell( newX, newZ ) );
-				fsm.ParticipantsToMove.Add( currentControllable );
+				fsm.ControlledLeader.SetNewPosition( new Cell( newX, newZ ) );
+				fsm.ParticipantsToMove.Add( fsm.ControlledLeader );
 				gotInput = true;
 				nextState = LevelManager_States.DetermineNextParticipantTurn;
 				return;
+			}
+			else
+			{
+				fsm.ControlledLeader.transform.LookAt(new Vector3( fsm.ControlledLeader.Column + horizontal, fsm.ControlledLeader.transform.position.y, fsm.ControlledLeader.Row + vertical ));
 			}
 		}
 		if ( Input.GetKeyDown( KeyCode.K ) )

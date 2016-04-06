@@ -27,10 +27,10 @@ public abstract class Participant : MonoBehaviour
 	public int Speed { get { return speed; } }
 
 	// Position
-	public int Column { get; private set; }
-	public int Row { get; private set; }
-	public int OldColumn { get; private set; }
-	public int OldRow { get; private set; }
+	public int Column { get; protected set; }
+	public int Row { get; protected set; }
+	public int OldColumn { get; protected set; }
+	public int OldRow { get; protected set; }
 
 	/// <summary>
 	/// Whether or not this participant is in the scene.
@@ -52,12 +52,20 @@ public abstract class Participant : MonoBehaviour
 	/// This functions sets the participants position based on the passed cell
 	/// </summary>
 	/// <param name="newCell"></param>
-	public void SetNewPosition(Cell newCell)
+	public virtual void SetNewPosition(Cell newCell)
 	{
 		this.OldColumn = this.Column;
 		this.OldRow = this.Row;
+		LevelManager.Instance.FloorCells[this.OldColumn, this.OldRow].Status = CellOccupancy.Open;
 		this.Column = newCell.column;
 		this.Row = newCell.row;
+		LevelManager.Instance.FloorCells[this.Column, this.Row].Status = CellOccupancy.Enemy;
+	}
+
+	public void SetInitialPosition(int column, int row)
+	{
+		this.Column = column;
+		this.Row = row;
 	}
 
     #endregion

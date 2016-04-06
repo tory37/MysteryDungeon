@@ -4,12 +4,12 @@ using System.Collections.Generic;
 using System;
 
 public enum ChunkStatus { Occupied, Unoccupied };
-public enum CellStatus { Occupied, Open };
+public enum CellOccupancy { Wall, Open, Item, Enemy, Player, Passable };
 
 public class Cell
 {
 	public int column, row;
-	public CellStatus Status = CellStatus.Open;
+	public CellOccupancy Status = CellOccupancy.Open;
 
 	public Cell()
 	{
@@ -258,7 +258,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int width = 0; width < numRowsInFloor; width++ )
 			{
-				floorCells[column, width].Status = CellStatus.Occupied;
+				floorCells[column, width].Status = CellOccupancy.Wall;
 			}
 		}
 	}
@@ -398,13 +398,13 @@ public class FloorGenerator : MonoBehaviour
 			{
 				try
 				{
-					if ( (column == startingColumn && column > 0 && floorCells[column - 1, row].Status == CellStatus.Open)
-					   || (column == (roomColumns + startingColumn) - 1 && column < numColumnsInFloor - 1 && floorCells[column + 1, row].Status == CellStatus.Open)
-					   || (row == startingRow && row > 0 && floorCells[column, row - 1].Status == CellStatus.Open)
-					   || (row == (roomRows + startingRow) - 1 && row < numRowsInFloor - 1 && floorCells[column, row + 1].Status == CellStatus.Open) )
+					if ( (column == startingColumn && column > 0 && floorCells[column - 1, row].Status == CellOccupancy.Open)
+					   || (column == (roomColumns + startingColumn) - 1 && column < numColumnsInFloor - 1 && floorCells[column + 1, row].Status == CellOccupancy.Open)
+					   || (row == startingRow && row > 0 && floorCells[column, row - 1].Status == CellOccupancy.Open)
+					   || (row == (roomRows + startingRow) - 1 && row < numRowsInFloor - 1 && floorCells[column, row + 1].Status == CellOccupancy.Open) )
 						Debug.Log( "Tile " + column + ", " + row + " did not get placed to maintain a wall on a side." );
-					else if ( floorCells[column, row].Status == CellStatus.Occupied )
-						floorCells[column, row].Status = CellStatus.Open;
+					else if ( floorCells[column, row].Status == CellOccupancy.Wall )
+						floorCells[column, row].Status = CellOccupancy.Open;
 					else
 						Debug.LogError( "During room generation, we tried to remove wall: " + column + ", " + row + ".  It had already been removed." );
 				}
@@ -423,7 +423,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			for ( int row = 0; row < numRowsInFloor; row++ )
 			{
-				if ( floorCells[column, row].Status == CellStatus.Occupied )
+				if ( floorCells[column, row].Status == CellOccupancy.Wall )
 				{
                     GameObject wall = GameObject.Instantiate(wallTestObject, new Vector3(column, .5f, row), Quaternion.Euler(Vector3.up * UnityEngine.Random.Range(0, 360))) as GameObject;
 					wall.transform.parent = wallsParent;
@@ -570,7 +570,7 @@ public class FloorGenerator : MonoBehaviour
 		{
 			int column = path[i].column;
 			int row = path[i].row;
-			floorCells[column, row].Status = CellStatus.Open;
+			floorCells[column, row].Status = CellOccupancy.Open;
 		}
 
 		//FindPath( startingChunk, endingChunk );
@@ -834,7 +834,7 @@ public class FloorGenerator : MonoBehaviour
 
 		for (int i = 0; i < path.Count; i++)
 		{
-			floorCells[path[i].cell.column, path[i].cell.row].Status = CellStatus.Open;
+			floorCells[path[i].cell.column, path[i].cell.row].Status = CellOccupancy.Open;
 		}
 	}
 
@@ -967,19 +967,55 @@ public class FloorGenerator : MonoBehaviour
 		int newCol = UnityEngine.Random.Range( startingRoom.startingColumn, startingRoom.startingColumn + startingRoom.columns );
 		int newRow = UnityEngine.Random.Range( startingRoom.startingRow, startingRoom.startingRow + startingRoom.rows );
 		Controllable current = GameObject.Instantiate(playerParty[0], new Vector3( newCol, .5f, newRow ), Quaternion.identity) as Controllable;
-		current.SetNewPosition( new Cell( newCol, newRow ) );
+		current.SetInitialPosition( newCol, newRow );
+		floorCells[newCol, newRow].Status = CellOccupancy.Player;
 		LevelManager.Instance.RegisterParticipant( current );
 		LevelManager.Instance.ChangeLeader( current);
 
 		for (int i = 1; i < playerParty.Count; i++)
 		{
-			//TODO: Make it go through each one and place it around the first player
-			if ( floorCells[LevelManager.Instance.ControlledLeader.Column - 1, newRow].Status == CellStatus.Open )
-				newCol = LevelManager.Instance.ControlledLeader.Column - 1;
-			else
-				newCol = LevelManager.Instance.ControlledLeader.Column + 1;
+			Controllable leader = LevelManager.Instance.ControlledLeader;
+			int offset = 1;
+			while (leader.Column - offset > 0 && leader.Column + offset < numColumnsInFloor && leader.Row - offset > 0 && leader.Row < numRowsInFloor)
+			{
+				if (floorCells[leader.Column, leader.Row - offset].Status == CellOccupancy.Open)
+				{
+					newCol = leader.Column; newRow = leader.Row - offset; break;
+				}
+				if ( floorCells[leader.Column + offset, leader.Row].Status == CellOccupancy.Open )
+				{
+					newCol = leader.Column + offset; newRow = leader.Row; break;
+				}
+				if ( floorCells[leader.Column, leader.Row + offset].Status == CellOccupancy.Open )
+				{
+					newCol = leader.Column; newRow = leader.Row + offset; break;
+				}
+				if ( floorCells[leader.Column - offset, leader.Row].Status == CellOccupancy.Open )
+				{
+					newCol = leader.Column - offset; newRow = leader.Row; break;
+				}
+				if ( floorCells[leader.Column + offset, leader.Row - offset].Status == CellOccupancy.Open )
+				{
+					newCol = leader.Column + offset; newRow = leader.Row - offset; break;
+				}
+				if ( floorCells[leader.Column + offset, leader.Row + offset].Status == CellOccupancy.Open )
+				{
+					newCol = leader.Column + offset; newRow = leader.Row + offset; break;
+				}
+				if ( floorCells[leader.Column - offset, leader.Row + offset].Status == CellOccupancy.Open )
+				{
+					newCol = leader.Column - offset; newRow = leader.Row + offset; break;
+				}
+				if ( floorCells[leader.Column - offset, leader.Row - offset].Status == CellOccupancy.Open )
+				{
+					newCol = leader.Column - offset; newRow = leader.Row - offset; break;
+				}
+
+				offset++;
+			}
 			current = GameObject.Instantiate( playerParty[i], new Vector3( newCol, .5f, newRow ), Quaternion.identity ) as Controllable;
-			current.SetNewPosition( new Cell( newCol, newRow ) );
+			current.SetInitialPosition( newCol, newRow );
+			floorCells[newCol, newRow].Status = CellOccupancy.Player;
 			LevelManager.Instance.RegisterParticipant( current );
 		}
 
@@ -1026,7 +1062,8 @@ public class FloorGenerator : MonoBehaviour
 			int newCol = UnityEngine.Random.Range( startingRoom.startingColumn, startingRoom.startingColumn + startingRoom.columns );
 			int newRow = UnityEngine.Random.Range( startingRoom.startingRow, startingRoom.startingRow + startingRoom.rows );
 			testParticipants[j].transform.position = new Vector3( newCol, .5f, newRow );
-			testParticipants[j].SetNewPosition( new Cell( newCol, newRow ) );
+			testParticipants[j].SetInitialPosition(newCol, newRow );
+			floorCells[newCol, newRow].Status = CellOccupancy.Enemy;
 			LevelManager.Instance.RegisterParticipant( testParticipants[j] );
 		}
 	}

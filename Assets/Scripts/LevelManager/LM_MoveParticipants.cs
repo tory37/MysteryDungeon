@@ -7,7 +7,7 @@ public class LM_MoveParticipants : State
 	#region Editor Interface
 
 	[SerializeField]
-	private float moveIntervals;
+	private int moveIntervals;
 
 	#endregion
 
@@ -44,8 +44,12 @@ public class LM_MoveParticipants : State
 		{
 			Participant p = fsm.ParticipantsToMove[i];
 			Vector3 direction = new Vector3( p.Column, p.transform.position.y, p.Row ) - p.transform.position;
-			p.transform.forward = direction.normalized;
-			directions.Add( new Tuple<Vector3, float>(direction.normalized, direction.magnitude / moveIntervals));
+			if ( p.transform.position != new Vector3( p.Column, p.transform.position.y, p.Row ) )
+				p.transform.forward = direction.normalized;
+			if (Input.GetAxis("SpeedShift") > 0)
+				directions.Add( new Tuple<Vector3, float>( direction.normalized, direction.magnitude / (moveIntervals / 2) ) );
+			else
+				directions.Add( new Tuple<Vector3, float>(direction.normalized, direction.magnitude / moveIntervals));
 			if (p.Anim != null)
 				p.Anim.SetBool( "Moving", true );
 		}
@@ -84,7 +88,11 @@ public class LM_MoveParticipants : State
 
 	private IEnumerator Move()
 	{
-		for (int i = 0; i < moveIntervals - 1; i++)
+		int tempMoveIntervals = moveIntervals;
+		if ( Input.GetAxis( "SpeedShift" ) > 0 )
+			tempMoveIntervals = tempMoveIntervals / 2;
+
+		for (int i = 0; i < tempMoveIntervals - 1; i++)
 		{
 			for (int par = 0; par < fsm.ParticipantsToMove.Count; par++)
 			{
