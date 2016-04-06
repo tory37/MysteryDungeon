@@ -65,7 +65,7 @@ public abstract class Controllable : Participant
 	{
 		this.OldColumn = this.Column;
 		this.OldRow = this.Row;
-		if ((LevelManager.Instance.ControlledLeader == this) || (LevelManager.Instance.ControlledLeader.Column != this.Column && LevelManager.Instance.ControlledLeader.Row != this.Row))
+		if ((LevelManager.Instance.ControlledLeader == this) || (LevelManager.Instance.ControlledLeader.Column != this.Column || LevelManager.Instance.ControlledLeader.Row != this.Row))
 			LevelManager.Instance.FloorCells[this.Column, this.Row].Status = CellOccupancy.Open;
 		this.Column = newCell.column;
 		this.Row = newCell.row;
