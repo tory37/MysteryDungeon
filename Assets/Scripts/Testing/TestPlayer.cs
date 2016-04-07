@@ -27,28 +27,29 @@ public class TestPlayer : Controllable {
 	{
 		Node[,] floorNodes = LevelManager.Instance.FloorNodes;
 		Controllable leader = LevelManager.Instance.ControlledLeader;
-		if ( ((Mathf.Abs( leader.Column - Column ) == 1 && leader.Row == Row) || (Mathf.Abs( leader.Row - Row ) == 1 && leader.Column == Column) || (Mathf.Abs( leader.Column - Column ) == 1 && Mathf.Abs( leader.Row - Row ) == 1))
-			&& !(leader.Column == Column + 1 && leader.Row == Row + 1 &&
-					(Paths.cornerPassableOccupancies.Contains( floorNodes[Column + 1, Row].Cell.Status ) ||
-					Paths.cornerPassableOccupancies.Contains( floorNodes[Column, Row + 1].Cell.Status )))
-			&& !(leader.Column == Column - 1 && leader.Row == Row + 1 &&
-					(Paths.cornerPassableOccupancies.Contains( floorNodes[Column - 1, Row].Cell.Status ) ||
-					Paths.cornerPassableOccupancies.Contains( floorNodes[Column, Row + 1].Cell.Status )))
-			&& !(leader.Column == Column - 1 && leader.Row == Row - 1 &&
-					(Paths.cornerPassableOccupancies.Contains( floorNodes[Column - 1, Row].Cell.Status ) ||
-					Paths.cornerPassableOccupancies.Contains( floorNodes[Column, Row - 1].Cell.Status )))
-			&& !(leader.Column == Column + 1 && leader.Row == Row - 1 &&
-					(Paths.cornerPassableOccupancies.Contains( floorNodes[Column + 1, Row].Cell.Status ) ||
-					Paths.cornerPassableOccupancies.Contains( floorNodes[Column, Row - 1].Cell.Status ))) )
-			return new Cell( Column, Row );
-		else if ( leader.Column == Column && leader.Row == Row )
+		//if ( ((Mathf.Abs( leader.Column - Column ) == 1 && leader.Row == Row) || (Mathf.Abs( leader.Row - Row ) == 1 && leader.Column == Column) || (Mathf.Abs( leader.Column - Column ) == 1 && Mathf.Abs( leader.Row - Row ) == 1))
+		//	&& !(leader.Column == Column + 1 && leader.Row == Row + 1 &&
+		//	if (!(	(Paths.cornerPassableOccupancies.Contains( floorNodes[Column + 1, Row].Cell.Status ) ||
+		//			Paths.cornerPassableOccupancies.Contains( floorNodes[Column, Row + 1].Cell.Status )))
+		//	&& !(leader.Column == Column - 1 && leader.Row == Row + 1 &&
+		//			(Paths.cornerPassableOccupancies.Contains( floorNodes[Column - 1, Row].Cell.Status ) ||
+		//			Paths.cornerPassableOccupancies.Contains( floorNodes[Column, Row + 1].Cell.Status )))
+		//	&& !(leader.Column == Column - 1 && leader.Row == Row - 1 &&
+		//			(Paths.cornerPassableOccupancies.Contains( floorNodes[Column - 1, Row].Cell.Status ) ||
+		//			Paths.cornerPassableOccupancies.Contains( floorNodes[Column, Row - 1].Cell.Status )))
+		//	&& !(leader.Column == Column + 1 && leader.Row == Row - 1 &&
+		//			(Paths.cornerPassableOccupancies.Contains( floorNodes[Column + 1, Row].Cell.Status ) ||
+		//			Paths.cornerPassableOccupancies.Contains( floorNodes[Column, Row - 1].Cell.Status ))))
+		//	return new Cell( Column, Row );
+		//else 
+		if ( leader.Column == Column && leader.Row == Row )
 			return new Cell( leader.OldColumn, leader.OldRow );
 		else
 		{
 			Node newNode = null;
 
 			if ( Paths.FindNextNode( LevelManager.Instance.FloorNodes[Column, Row], floorNodes[leader.Column, leader.Row], out newNode )
-				&& newNode.Cell.Status != CellOccupancy.Player )
+				)
 				return newNode.Cell;
 			else
 				return new Cell( Column, Row );

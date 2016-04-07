@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 public enum LevelManager_States
 {
@@ -45,8 +46,10 @@ public class LevelManager : MonoFSM
 	public Cell[,] FloorCells { get { return floorCells; } }
 	public int CurrentParticipantIndex { get { return currentParticipantIndex; } }
 	public Controllable ControlledLeader { get { return controlledLeader; } }
-	public List<Participant> FloorParticipants { get { return floorParticipants; } }
+	public ReadOnlyCollection<Participant> FloorParticipants { get { return floorParticipants.AsReadOnly(); } }
 	public Node[,] FloorNodes { get; private set; }
+	public ReadOnlyCollection<Controllable> Players { get { return players.AsReadOnly(); } }
+	public ReadOnlyCollection<Participant> ParticipantsToMove { get { return participantsToMove.AsReadOnly(); } }
 
 	public void ChangeLeader(Controllable controllable)
 	{
@@ -153,6 +156,10 @@ public class LevelManager : MonoFSM
 			}
 		}
 		newParticipants.Enqueue( participant );
+
+		if ( players == null )
+			players = new List<Controllable>();
+		players.Add( controllable );
 	}
 
 	/// <summary>
@@ -162,6 +169,9 @@ public class LevelManager : MonoFSM
 	public void UnregisterParticipant(Participant participant)
 	{
 		deadParticipants.Enqueue( participant );
+		Controllable c = participant as Controllable;
+		if ( c != null && Players.Contains( c ) )
+			players.Remove( c );
 	}
 
 	public void RegisterNewParticipants()
@@ -222,15 +232,18 @@ public class LevelManager : MonoFSM
 		return p;
 	}
 
+	public void AddParticipantToMove(Participant p)
+	{
+		if ( participantsToMove.Contains( p ) )
+			return;
+		else
+			participantsToMove.Add( p );
+	}
+
 	public void FinishedMovingParticipants()
 	{
 		participantsToMove = new List<Participant>();
 	}
-
-	#endregion
-
-	#region State Shared Variables
-	public List<Participant> ParticipantsToMove { get { return participantsToMove; } }
 
 	#endregion
 
@@ -260,6 +273,8 @@ public class LevelManager : MonoFSM
 	/// A list of participants that are waiting to be moved
 	/// </summary>
 	private List<Participant> participantsToMove;
+
+	private List<Controllable> players;
 
 	private Queue<Participant> newParticipants;
 

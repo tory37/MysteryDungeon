@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 public abstract class Controllable : Participant
 {
@@ -9,6 +11,12 @@ public abstract class Controllable : Participant
 	#endregion
 
 	#region Public Interface
+
+	public static readonly IList<CellOccupancy> walkableOccupancies = new ReadOnlyCollection<CellOccupancy>(
+		new List<CellOccupancy>
+		{
+			CellOccupancy.Open
+		} );
 
 	public bool IsLeader
 	{
@@ -65,7 +73,20 @@ public abstract class Controllable : Participant
 	{
 		this.OldColumn = this.Column;
 		this.OldRow = this.Row;
-		if ((LevelManager.Instance.ControlledLeader == this) || (LevelManager.Instance.ControlledLeader.Column != this.Column || LevelManager.Instance.ControlledLeader.Row != this.Row))
+		// If the leader is switching places with another player, we move both of them, and put the other player in the move queue
+		if (LevelManager.Instance.ControlledLeader == this && LevelManager.Instance.FloorCells[newCell.column, newCell.row].Status == CellOccupancy.Player)
+		{
+			ReadOnlyCollection<Controllable> players = LevelManager.Instance.Players;
+			for (int i = 0; i < players.Count; i++)
+			{
+				if ( players[i].Column == newCell.column && players[i].Row == newCell.row )
+				{
+					players[i].SetNewPosition( new Cell(this.OldColumn, this.OldRow) );
+					LevelManager.Instance.AddParticipantToMove( players[i] );
+				}
+			}
+		}
+		else
 			LevelManager.Instance.FloorCells[this.Column, this.Row].Status = CellOccupancy.Open;
 		this.Column = newCell.column;
 		this.Row = newCell.row;

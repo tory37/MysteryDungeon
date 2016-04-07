@@ -81,7 +81,7 @@ public class LM_DetermineNextTurn : State
 		{
 			currentParticipant = fsm.ActOnCurrentParticipant();
 			currentParticipant.SetNewPosition( currentParticipant.FindNewCell() );
-			fsm.ParticipantsToMove.Add( currentParticipant );
+			fsm.AddParticipantToMove( currentParticipant );
 
 			currentParticipant = fsm.PeekCurrentParticipant();
 		} 

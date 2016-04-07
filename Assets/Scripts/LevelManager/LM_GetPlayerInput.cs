@@ -44,7 +44,7 @@ public class LM_GetPlayerInput : State
 			if (fsm.ControlledLeader.CanMove(vertical, horizontal, ref newX, ref newZ))
 			{
 				fsm.ControlledLeader.SetNewPosition( new Cell( newX, newZ ) );
-				fsm.ParticipantsToMove.Add( fsm.ControlledLeader );
+				fsm.AddParticipantToMove( fsm.ControlledLeader );
 				gotInput = true;
 				nextState = LevelManager_States.DetermineNextParticipantTurn;
 				return;

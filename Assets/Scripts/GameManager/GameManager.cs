@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 public class GameManager : MonoBehaviour
 {
@@ -27,8 +28,7 @@ public class GameManager : MonoBehaviour
 		}
 	}
 
-	public Controllable Leader { get { return leader; } }
-	public List<Controllable> PartyMinusLeader { get { return partyMinusLeader; } }
+	public ReadOnlyCollection<Controllable> Party { get { return } }
 
 	#endregion
 

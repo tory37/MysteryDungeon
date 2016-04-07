@@ -21,7 +21,7 @@ public class Node :IComparable
 		this.H = h;
 	}
 
-	public int F { get { return G + H; } }
+	public int F { get { return this.G + this.H; } }
 
 	public Node Set(Node parent, int g, int h)
 	{
@@ -48,6 +48,19 @@ public class Paths {
 			CellOccupancy.Passable
 		});
 
+	public static readonly IList<CellOccupancy> higherHeuristicOccupancies = new ReadOnlyCollection<CellOccupancy>(
+		new List<CellOccupancy>
+		{
+			CellOccupancy.Player,
+			CellOccupancy.Enemy,
+		} );
+
+	public static readonly IList<CellOccupancy> removeFromPathOccupancies = new ReadOnlyCollection<CellOccupancy>(
+		new List<CellOccupancy>
+		{
+			CellOccupancy.Wall
+		} );
+
 	// Uses the astar path finding to modify the level nodes, then
 	// returns the next node this participant should move to
 	public static bool FindNextNode(Node start, Node end, out Node nextNode)
@@ -67,11 +80,11 @@ public class Paths {
 			nextNode = current;
 			return true;
 		}
-		else if (closedList.Count >= 2)
-		{
-			nextNode = closedList[1];
-			return true;
-		}
+		//else if (closedList.Count >= 2)
+		//{
+		//	nextNode = closedList[1];
+		//	return true;
+		//}
 		return false;
 	}
 
@@ -103,12 +116,14 @@ public class Paths {
 				if ( openList[i].F < currentNode.F )
 					currentNode = openList[i];
 			}
+			
+			// If we are on the end node
+			if ( currentNode == end )
+				return true;
 
 			// Switch it to the closed list
 			openList.Remove( currentNode );
 			closedList.Add( currentNode );
-			if ( currentNode == end )
-				return true;
 
 			// For each of the 8 squares adjacent to this current square
 			//	If it is not walkable or if it is on the closed list, ignore it. Otherwise do the following. 
@@ -116,7 +131,7 @@ public class Paths {
 
 			for ( int i = 0; i < newNodes.Count; i++ )
 			{
-				bool condition = ((newNodes[i].Cell.Status != CellOccupancy.Open) || closedList.Contains( newNodes[i] )) && newNodes[i] != end;
+				bool condition = (removeFromPathOccupancies.Contains(newNodes[i].Cell.Status) || closedList.Contains( newNodes[i] )) && newNodes[i] != end;
 
 				if ( newNodes[i].Cell.column == currentNode.Cell.column + 1 && newNodes[i].Cell.row == currentNode.Cell.row + 1 &&
 					(!cornerPassableOccupancies.Contains(floorNodes[currentNode.Cell.column + 1, currentNode.Cell.row].Cell.Status) ||
@@ -241,7 +256,15 @@ public class Paths {
 	/// <returns></returns>
 	private static int FindH(Node start, Node end)
 	{
-		return 10 * (Mathf.Abs( start.Cell.column - end.Cell.column ) + Mathf.Abs( start.Cell.row - end.Cell.row ));
+		int H = 10 * (Mathf.Abs( start.Cell.column - end.Cell.column ) + Mathf.Abs( start.Cell.row - end.Cell.row ));;
+
+		if ( higherHeuristicOccupancies.Contains( start.Cell.Status ) ) 
+			H *= 50;
+
+		if ( start == end )
+			H = 10000;
+
+		return H;
 	}
 
 }
